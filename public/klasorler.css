@@ -60,10 +60,10 @@
 .klasor-sahip { color: var(--soluk); font-weight: 600 }
 
 .klasor-bolum { padding: 18px 22px; border-bottom: 1px solid var(--cizgi) }
-.klasor-bolum-bas { margin: 0 0 12px; font-size: .76rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: var(--soluk) }
+.klasor-bolum-bas { margin: 0 0 12px; font-size: .95rem; font-weight: 750; color: var(--soluk) }
 .klasor-bos-not { margin: 0; color: var(--soluk); font-size: .92rem }
 
-.klasor-kartlar { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)) }
+.klasor-kartlar { display: grid; gap: 0; border: 1px solid var(--cizgi); border-radius: 12px; overflow: hidden }
 .klasor-kart { display: grid; gap: 3px; text-align: left; padding: 12px 14px; border: 1px solid var(--cizgi); border-radius: 12px;
   background: var(--kart); font: inherit; cursor: pointer; transition: border-color 120ms, box-shadow 120ms }
 .klasor-kart:hover { border-color: var(--yesil); box-shadow: var(--golge-o) }
@@ -109,3 +109,27 @@
   .klasor-bas, .klasor-bolum, .klasor-yukle { padding-inline: 16px }
 }
 .klasor-tablo .metin-bag { text-align: left }
+
+/* --- İşe odaklı başlangıç ------------------------------------------------------- */
+.klasor-arac { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 18px }
+.klasor-arac-ara { flex: 1 1 280px; min-height: 44px; font-size: 1rem }
+.klasor-arac-dugmeler { display: flex; flex-wrap: wrap; gap: 8px }
+.klasor-arac-dugmeler .dugme[aria-pressed="true"] { border-color: var(--yesil); color: var(--yesil); background: rgba(18,121,92,.08) }
+.klasor-hakkinda { margin-top: 16px; border: 1px solid var(--cizgi); border-radius: 12px; background: var(--kart); padding: 0 16px }
+.klasor-hakkinda summary { cursor: pointer; padding: 12px 0; font-weight: 700; color: var(--murekkep) }
+.klasor-hakkinda[open] { padding-bottom: 16px }
+.klasor-hakkinda > p { margin: 0 0 4px }
+.klasor-dosya-yer { display: inline-block; margin-bottom: 6px; font-size: .84rem }
+@media (max-width: 720px) {
+  .klasor-arac-dugmeler { width: 100% }
+  .klasor-arac-dugmeler .dugme { flex: 1 1 auto }
+}
+
+/* Alt klasörler satır olarak (sadeleştirme turu): kart ızgarası dosya
+   sayısını ve adı ayırt etmeyi zorlaştırıyordu. */
+.klasor-kartlar .klasor-kart { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 14px; border: 0; border-radius: 0; box-shadow: none }
+.klasor-kartlar .klasor-kart + .klasor-kart { border-top: 1px solid var(--cizgi) }
+.klasor-kartlar .klasor-kart:hover { background: rgba(18,121,92,.05); box-shadow: none }
+.klasor-kartlar .klasor-kart[data-bos="true"] { border-style: solid }
+.klasor-kartlar .klasor-kart[data-bos="true"] .klasor-kart-ad { color: var(--metin) }
+.klasor-kartlar .klasor-kart:not(:has(.klasor-no)) { grid-template-columns: minmax(0, 1fr) auto }

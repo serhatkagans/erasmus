@@ -1,6 +1,5 @@
 import {
-  durum, t, baslat, iste, ceviriyiUygula, ortakAdi, ortakKisa, yerAdi,
-  etkinlikBaslik, tamTarih, bugun, gunFarki,
+  durum, t, baslat, iste, ceviriyiUygula, ortakAdi, ortakKisa, yerAdi, etkinlikBaslik, tamTarih, bugun, gunFarki, onayla, bildir,
 } from './ortak.js';
 
 /**
@@ -21,6 +20,8 @@ const el = (etiket, sinif, metin) => {
 };
 
 let uyeler = [];
+/* Ekibe eklenebilecek kişiler: sistemdeki hesaplar (dışarıdan ad yazılmaz). */
+let adaylar = [];
 let gorevler = [];
 let gorevDurumlari = [];
 let ilerlemeAdimi = 10;
@@ -148,16 +149,10 @@ function uyeSatiri(u) {
     duzenle.setAttribute('aria-label', `${t('genel.duzenle')}: ${u.ad}`);
     duzenle.addEventListener('click', () => uyeFormAc(u, u.partner));
 
-    const sil = el('button', 'satir-dugme satir-dugme-sil', '×');
-    sil.type = 'button';
-    sil.title = t('genel.sil');
-    sil.setAttribute('aria-label', `${t('genel.sil')}: ${u.ad}`);
-    sil.addEventListener('click', async () => {
-      if (!confirm(t('ekip.uye.sil.onay'))) return;
-      try { await iste(`api/ekip/uye/${u.id}`, { method: 'DELETE' }); await yenile(); }
-      catch (err) { alert(err.message); }
-    });
-    eylem.append(duzenle, sil);
+    /* Ekipten çıkarma düğmesi YOK (kullanıcı kararı, 23 Eylül 2026): ekip
+       üyesi kurumun kalıcı kadrosudur; yanlışlıkla silinip görev ataması
+       kopmasın. Kişi ekipten yalnızca hesabı silinince çıkar. */
+    eylem.append(duzenle);
     satir.append(eylem);
   }
   return satir;
@@ -187,7 +182,7 @@ function gorevSatiri(g) {
            denetimle başka alanları da düzeltebilsin. */
         await iste(`api/gorevler/${g.id}`, { method: 'PUT', body: JSON.stringify({ ...g, durum: secim.value }) });
         await yenile();
-      } catch (err) { alert(err.message); secim.value = g.durum; }
+      } catch (err) { bildir(err.message, 'hata'); secim.value = g.durum; }
     });
     ust.append(secim);
   } else {
@@ -220,7 +215,7 @@ function gorevSatiri(g) {
         });
         await yenile();
       } catch (err) {
-        alert(err.message);
+        bildir(err.message, 'hata');
         kaydirici.value = String(g.ilerleme);
         yuzde.textContent = `%${g.ilerleme}`;
       }
@@ -263,9 +258,9 @@ function gorevSatiri(g) {
     sil.title = t('genel.sil');
     sil.setAttribute('aria-label', `${t('genel.sil')}: ${g.baslik}`);
     sil.addEventListener('click', async () => {
-      if (!confirm(t('gorev.sil.onay'))) return;
-      try { await iste(`api/gorevler/${g.id}`, { method: 'DELETE' }); await yenile(); }
-      catch (err) { alert(err.message); }
+      if (!(await onayla(t('gorev.sil.onay'), { evet: t('genel.sil'), tehlike: true }))) return;
+      try { await iste(`api/gorevler/${g.id}`, { method: 'DELETE' }); await yenile(); bildir(t('genel.silindi')); }
+      catch (err) { bildir(err.message, 'hata'); }
     });
     eylem.append(duzenle, sil);
     satir.append(eylem);
@@ -302,11 +297,38 @@ function uyeFormAc(mevcut, partner) {
   secenekDoldur(form.partner, yetkiliKurumlar(), ortakAdi, mevcut?.partner ?? partner ?? durum.kullanici.partner);
   /* Kurum değiştirmek kaydı taşımak demek olurdu; düzenlemede kilitli. */
   form.partner.disabled = !!mevcut;
-  form.ad.value = mevcut?.ad ?? '';
+  kisiSecimi(form, mevcut);
   form.rol.value = mevcut?.rol ?? '';
   form.eposta.value = mevcut?.eposta ?? '';
   form.dataset.id = mevcut?.id ?? '';
   $('uye-kutu').showModal();
+}
+
+/**
+ * Kişi seçimi: yalnızca SEÇİLİ KURUMUN hesapları, ekipte olmayanlar.
+ * Başka kurumdan biri listede hiç çıkmaz (sunucu da reddeder). Düzenlemede
+ * kişi değiştirilemez; kayıt o kişinindir.
+ */
+function kisiSecimi(form, mevcut) {
+  const secim = form.userId;
+  secim.replaceChildren();
+  if (mevcut) {
+    const o = new Option(mevcut.ad, mevcut.userId ?? '');
+    secim.append(o);
+    secim.disabled = true;
+    return;
+  }
+  secim.disabled = false;
+  const ekipte = new Set(uyeler.map(u => u.userId).filter(Boolean));
+  const liste = adaylar.filter(a => a.partner === form.partner.value && !ekipte.has(a.id));
+  if (!liste.length) {
+    const bos = new Option(t('ekip.uye.aday.yok'), '');
+    bos.disabled = true;
+    secim.append(bos);
+    secim.value = '';
+  } else {
+    secim.append(new Option(t('ekip.uye.aday.sec'), ''), ...liste.map(a => new Option(a.ad, a.id)));
+  }
 }
 
 function gorevFormAc(mevcut, partner) {
@@ -355,6 +377,7 @@ async function gonder(form, hataKutusu, yol, veri) {
     await iste(id ? `${yol}/${id}` : yol, { method: id ? 'PUT' : 'POST', body: JSON.stringify(veri) });
     form.closest('dialog').close();
     await yenile();
+    bildir(t('genel.kaydedildi'));
   } catch (err) {
     hataKutusu.textContent = err.message;
   } finally {
@@ -365,6 +388,7 @@ async function gonder(form, hataKutusu, yol, veri) {
 async function yenile() {
   const veri = await iste('api/ekip');
   uyeler = veri.uyeler;
+  adaylar = veri.adaylar || [];
   gorevler = veri.gorevler;
   gorevDurumlari = veri.gorevDurumlari;
   ilerlemeAdimi = veri.ilerlemeAdimi ?? ilerlemeAdimi;
@@ -389,11 +413,16 @@ async function yenile() {
       dugme.addEventListener('click', () => dugme.closest('dialog').close());
     }
 
+    /* Kurum değişince kişi listesi o kurumun hesaplarına döner. */
+    $('uye-form').partner.addEventListener('change', () => kisiSecimi($('uye-form'), null));
+
     $('uye-form').addEventListener('submit', olay => {
       olay.preventDefault();
       const f = olay.target;
+      const mevcut = uyeler.find(u => String(u.id) === f.dataset.id);
       gonder(f, $('uye-hata'), 'api/ekip/uye', {
-        partner: f.partner.value, ad: f.ad.value, rol: f.rol.value, eposta: f.eposta.value,
+        partner: f.partner.value, userId: f.userId.value ? Number(f.userId.value) : null,
+        ad: mevcut?.ad, rol: f.rol.value, eposta: f.eposta.value,
       });
     });
 

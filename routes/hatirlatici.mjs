@@ -4,6 +4,8 @@ import {
 } from '../lib/data.mjs';
 import { send } from '../lib/http.mjs';
 import { accepting, fills } from '../lib/forms.mjs';
+import { durumBekliyor, teslimBekliyor } from '../lib/faaliyet.mjs';
+import { CIKTILAR } from '../lib/cikti.mjs';
 
 /**
  * Uygulama içi hatırlatıcılar.
@@ -112,6 +114,28 @@ export function hatirlaticiRoutes({ db }) {
         `takvim.html#etkinlik-${e.id}`));
     }
 
+    /* --- Durumu güncellenmemiş faaliyet ve çıktı --------------------------
+       Bitmiş ama "tamamlandı" yapılmamış faaliyet lider kuruma, teslim tarihi
+       geçmiş ama "teslim edildi" yapılmamış çıktı sorumlu kuruma hatırlatılır.
+       Karar insanda kalır; hatırlatıcı yalnızca unutulmasın diye. */
+    const tumEtkinlik = await db.all('SELECT id,slug,baslik,kod,wp,lider,bitis,durum FROM events');
+    const bekleyenEtkinlik = tumEtkinlik.filter(e => durumBekliyor(e, simdi));
+    for (const e of bekleyenEtkinlik.filter(e => e.lider === user.partner)) {
+      liste.push(yap('etkinlik-durum', 'uyari', 'hatirlatici.etkinlik.durum',
+        { slug: e.slug || '', baslik: e.baslik || e.kod || e.wp }, `takvim.html#etkinlik-${e.id}`));
+    }
+    const ciktiSatir = new Map((await db.all('SELECT slug,durum,sorumlu,teslim FROM outputs')).map(c => [c.slug, c]));
+    const ciktilar = CIKTILAR.map(t => {
+      const s = ciktiSatir.get(t.slug) || {};
+      const e = t.etkinlik ? tumEtkinlik.find(x => x.slug === t.etkinlik) : null;
+      return { slug: t.slug, anahtar: t.anahtar, durum: s.durum,
+        sorumlu: e ? e.lider : s.sorumlu, teslim: e ? String(e.bitis).slice(0, 10) : s.teslim };
+    });
+    const bekleyenCikti = ciktilar.filter(c => teslimBekliyor(c, simdi));
+    for (const c of bekleyenCikti.filter(c => c.sorumlu === user.partner)) {
+      liste.push(yap('cikti-durum', 'uyari', 'hatirlatici.cikti.durum', { anahtar: c.anahtar }, `ciktilar.html#${c.slug}`));
+    }
+
     /* --- Koordinatöre özel --------------------------------------------- */
     if (user.koordinator) {
       const kisiler = await db.all('SELECT id,partner,koordinator FROM users');
@@ -128,6 +152,13 @@ export function hatirlaticiRoutes({ db }) {
           liste.push(yap('form-ozet', kalan <= 3 ? 'acil' : 'uyari', 'hatirlatici.form.eksikYanit',
             { baslik: f.baslik, n: eksik, gun: kalan }, `formlar.html#form-${f.id}`));
         }
+      }
+
+      /* Başka kurumlarda durumu güncellenmemiş faaliyet ve çıktılar. */
+      const baskaDurum = bekleyenEtkinlik.filter(e => e.lider !== user.partner).length
+        + bekleyenCikti.filter(c => c.sorumlu !== user.partner).length;
+      if (baskaDurum) {
+        liste.push(yap('durum-ozet', 'bilgi', 'hatirlatici.durum.baskaKurum', { n: baskaDurum }, 'pano.html'));
       }
 
       /* Başka kurumlarda gecikmiş görevler: koordinatörün izleme görevi. */

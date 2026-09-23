@@ -16,6 +16,9 @@ import { belgeRoutes } from './routes/belge.mjs';
 import { klasorRoutes } from './routes/klasor.mjs';
 import { profilRoutes } from './routes/profil.mjs';
 import { kullanicilarRoutes } from './routes/kullanicilar.mjs';
+import { ciktiRoutes } from './routes/cikti.mjs';
+import { faaliyetRoutes } from './routes/faaliyet.mjs';
+import { panoRoutes } from './routes/pano.mjs';
 
 /**
  * HTTP sunucusu: ortak başlıklar, oturum ve dil çözümü, yönlendirme zinciri
@@ -26,10 +29,15 @@ import { kullanicilarRoutes } from './routes/kullanicilar.mjs';
  * döndürmez ve sıra bir sonrakine geçer. Sonunda hiçbiri sahiplenmezse
  * statik dosyalara, oradan da 404'e düşülür.
  *
- * GençTek takviminden farklı olarak PROGRAM HERKESE AÇIKTIR: proje tanıtımı
- * ve etkinlik takvimi oturum istemez. Giriş yalnızca ortakların kendi
- * etkinliklerini eklemesi ve durum güncellemesi için gerekir.
+ * PLATFORM DIŞARIYA KAPALIDIR (kullanıcı kararı, 23 Eylül 2026: "ziyaretçi
+ * yok, herkes üye olacak"). Oturumsuz istek yalnızca giriş sayfasına ve
+ * NFC profil kartlarına ulaşır; kart, dağıtıldığı kişilerin girişi
+ * olmadığı için bilinçli istisnadır. Kural route'lara tek tek yazılmadı,
+ * aşağıdaki KAPI'da durur: yeni eklenen bir uç ya da sayfa kendiliğinden
+ * kapalı doğar, açmak için bu listeye eklemek gerekir.
  */
+const ACIK_API = new Set(['/api/acilis', '/api/giris', '/api/cikis', '/api/profil', '/api/profil/foto']);
+const ACIK_SAYFA = new Set(['/giris.html', '/profil.html']);
 const db = await openDb();
 
 const etkinlik = etkinlikRoutes({ db });
@@ -42,6 +50,9 @@ const belge = belgeRoutes({ db });
 const klasorler = klasorRoutes({ db });
 const profil = profilRoutes({ db });
 const kullanicilar = kullanicilarRoutes({ db });
+const cikti = ciktiRoutes({ db });
+const faaliyet = faaliyetRoutes({ db });
+const pano = panoRoutes({ db });
 
 const FILES = {
   '/index.html': ['index.html', 'text/html'],
@@ -55,6 +66,10 @@ const FILES = {
   '/profil.js': ['profil.js', 'text/javascript'],
   '/kullanicilar.html': ['kullanicilar.html', 'text/html'],
   '/kullanicilar.js': ['kullanicilar.js', 'text/javascript'],
+  '/ciktilar.html': ['ciktilar.html', 'text/html'],
+  '/ciktilar.js': ['ciktilar.js', 'text/javascript'],
+  '/pano.html': ['pano.html', 'text/html'],
+  '/pano.js': ['pano.js', 'text/javascript'],
   '/ortak.js': ['ortak.js', 'text/javascript'],
   '/anasayfa.js': ['anasayfa.js', 'text/javascript'],
   '/takvim.js': ['takvim.js', 'text/javascript'],
@@ -89,6 +104,8 @@ async function staticFile(req, res, url, readOnly) {
 const server = createServer(async (req, res) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'same-origin');
+  /* Kapalı platform arama motorlarında görünmesin (profil kartları dahil). */
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   res.setHeader('Content-Security-Policy',
     "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
 
@@ -111,6 +128,23 @@ const server = createServer(async (req, res) => {
     /* Adres çubuğundan seçilen dil çereze yazılır ki sonraki sayfalarda
        `?dil=` taşımak gerekmesin. */
     if (url.searchParams.get('dil') === dil) res.setHeader('Set-Cookie', langCookie(dil));
+
+    /* KAPI: oturumsuz istek. Sayfa istendiyse girişe yönlendirilir ve
+       girişten sonra geri dönülecek adres taşınır; API 401 alır. Görsel,
+       stil ve betik dosyaları açıktır — veri taşımazlar, giriş sayfası da
+       onlarla çiziliyor. */
+    if (!user) {
+      const sayfa = url.pathname === '/' ? '/index.html' : url.pathname;
+      if (url.pathname.startsWith('/api/') ? !ACIK_API.has(url.pathname) : url.pathname === '/takvim.ics') {
+        return send(res, 401, { error: 'genel.girisGerekli' });
+      }
+      if (FILES[sayfa]?.[1] === 'text/html' && !ACIK_SAYFA.has(sayfa)) {
+        const geri = sayfa === '/index.html' ? '' : `?geri=${encodeURIComponent(sayfa.slice(1) + url.search)}`;
+        res.writeHead(302, { Location: `giris.html${geri}`, 'Cache-Control': 'no-store' });
+        res.end();
+        return;
+      }
+    }
 
     const ctx = { req, res, url, user, token, readOnly, dil };
 
@@ -155,6 +189,9 @@ const server = createServer(async (req, res) => {
     if (await klasorler(ctx)) return;
     if (await profil(ctx)) return;
     if (await kullanicilar(ctx)) return;
+    if (await cikti(ctx)) return;
+    if (await faaliyet(ctx)) return;
+    if (await pano(ctx)) return;
     if (await staticFile(req, res, url, readOnly)) return;
 
     send(res, 404, { error: 'Sayfa bulunamadı.' });

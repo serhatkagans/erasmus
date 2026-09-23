@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Çıktılar · E-YOUTHPRENEUR</title>
+<link rel="icon" href="logo.png">
+<link rel="stylesheet" href="style.css">
+<script src="ciktilar.js" type="module"></script>
+</head>
+<body data-t-sayfa="cikti.baslik">
+
+<a class="atla" href="#icerik" data-t="menu.atla"></a>
+
+<header class="ust">
+  <div class="kapsayici ust-ic">
+    <a class="marka" href="./">
+      <img src="logo.png" alt="">
+      <span>E-YOUTHPRENEUR <small data-t="altbilgi.kunye"></small></span>
+    </a>
+    <!-- Menü ortak.js'te tek listeden kurulur (menuyuKur): her sayfada aynı. -->
+    <nav class="gezinme" id="gezinme" data-t-etiket="menu.ana"></nav>
+    <div class="ust-sag">
+      <span id="hatirlatici" class="hatirlatici" hidden></span>
+      <div id="dil-secici" class="dil-secici" hidden></div>
+      <div id="hesap" class="hesap" hidden></div>
+      <a id="giris-baglanti" class="dugme dugme-hayalet" href="giris.html" data-t="menu.giris"></a>
+      <button id="menu-dugme" class="menu-dugme" type="button" aria-expanded="false" aria-controls="gezinme" hidden><span aria-hidden="true">☰</span> <span data-t="menu.menu"></span></button>
+    </div>
+  </div>
+</header>
+
+<main id="icerik">
+  <section class="kapsayici sayfa-bas">
+    <span class="ustbaslik" data-t="cikti.ustbaslik"></span>
+    <h1 data-t="cikti.baslik"></h1>
+    <p data-t="cikti.giris"></p>
+  </section>
+  <div class="kapsayici">
+    <div id="cikti-liste" class="cikti-izgara"></div>
+    <article id="cikti-ayrinti" class="cikti-ayrinti" hidden></article>
+  </div>
+</main>
+
+<footer class="alt">
+  <div class="kapsayici alt-ic">
+    <div class="alt-ust">
+      <span class="marka"><img src="logo.png" alt=""><span>E-YOUTHPRENEUR</span></span>
+      <div class="ab-kilit">
+        <img src="ab-amblem.svg" data-t-etiket="ab.amblem" alt="">
+        <span data-t="ab.finanse"></span>
+      </div>
+    </div>
+    <div class="alt-kunye">
+      <span data-t="altbilgi.program"></span>
+      <span data-t="altbilgi.projeno"></span>
+      <span data-t="altbilgi.sure"></span>
+      <span data-t="altbilgi.ajans"></span>
+    </div>
+    <p class="alt-erisim" data-t="altbilgi.erisim"></p>
+    <p class="alt-feragat" data-t="altbilgi.feragat"></p>
+  </div>
+</footer>
+
+<dialog id="cikti-kutu" data-koru>
+  <form id="cikti-form" class="kutu-ic">
+    <div class="kutu-ust">
+      <h2 id="cikti-form-baslik"></h2>
+      <button type="button" class="kapat" data-kapat data-t-etiket="genel.kapat">×</button>
+    </div>
+    <div class="form-izgara">
+      <label class="alan"><span data-t="cikti.durum"></span><select name="durum"></select></label>
+      <label class="alan" id="cikti-sorumlu-alan"><span data-t="cikti.sorumlu"></span><select name="sorumlu"></select></label>
+      <label class="alan" id="cikti-teslim-alan"><span data-t="cikti.teslim"></span><input name="teslim" type="date"></label>
+      <p class="form-tam alan-ipucu" id="cikti-takvim-not" data-t="cikti.takvimden" hidden></p>
+      <label class="alan form-tam"><span data-t="cikti.disUrl"></span><input name="disUrl" type="url" maxlength="500" placeholder="https://"></label>
+      <label class="alan form-tam"><span data-t="cikti.not"></span><textarea name="not" maxlength="1000" rows="3"></textarea></label>
+    </div>
+    <p class="hata" id="cikti-hata" role="alert"></p>
+    <div class="kutu-eylem">
+      <button type="submit" class="dugme dugme-birincil" data-t="genel.kaydet"></button>
+      <button type="button" class="dugme dugme-ikincil" data-kapat data-t="genel.vazgec"></button>
+    </div>
+  </form>
+</dialog>
+</body>
+</html>

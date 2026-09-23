@@ -20,12 +20,11 @@
     <!-- Menü ortak.js'te tek listeden kurulur (menuyuKur): her sayfada aynı. -->
     <nav class="gezinme" id="gezinme" data-t-etiket="menu.ana"></nav>
     <div class="ust-sag">
-      <span id="kullanici-adi" class="kullanici-rozet" hidden></span>
       <span id="hatirlatici" class="hatirlatici" hidden></span>
       <div id="dil-secici" class="dil-secici" hidden></div>
-      <button id="parola-dugme" class="dugme dugme-hayalet" hidden data-t="menu.parola"></button>
+      <div id="hesap" class="hesap" hidden></div>
       <a id="giris-baglanti" class="dugme dugme-hayalet" href="giris.html" data-t="menu.giris"></a>
-      <button id="cikis-dugme" class="dugme dugme-hayalet" hidden data-t="menu.cikis"></button>
+      <button id="menu-dugme" class="menu-dugme" type="button" aria-expanded="false" aria-controls="gezinme" hidden><span aria-hidden="true">☰</span> <span data-t="menu.menu"></span></button>
     </div>
   </div>
 </header>

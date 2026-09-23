@@ -41,6 +41,33 @@ function ilerlemeyiCiz() {
     : t('anasayfa.ilerleme.gecen', { n: Math.floor(oran * months) });
 }
 
+/* Başvuruda taahhüt edilen faaliyetlerden kaçı tamamlandı. Yalnızca resmî
+   kayıtlar sayılır: ortakların eklediği ek etkinlikler paydayı büyütüp
+   oranı düşürür, taahhüdün ölçüsü de değildir. Çıktı teslimi burada
+   YOKTUR — çıktı kütüphanesi (Faz 1) gelince ayrı bir ölçü olarak eklenir. */
+function faaliyetleriCiz(etkinlikler) {
+  const resmi = etkinlikler.filter(e => e.resmi);
+  const biten = resmi.filter(e => e.durum === 'tamamlandi').length;
+  const suren = resmi.filter(e => e.durum === 'devam').length;
+  $('faaliyet-dolu').style.width = resmi.length ? `${(biten / resmi.length * 100).toFixed(1)}%` : '0%';
+  $('faaliyet-metin').textContent = t('anasayfa.faaliyet.tamam', { n: biten, toplam: resmi.length });
+  $('faaliyet-devam').textContent = suren ? t('anasayfa.faaliyet.devam', { n: suren }) : '';
+}
+
+/* Teslim edilen çıktılar: çıktı kütüphanesindeki durumdan. Ara ürün (masa
+   başı araştırma) sayılmaz — kamuya açık teslimat değil. Kartlarda da her
+   çıktının güncel durumu yazar. */
+function ciktilariCiz(ciktilar) {
+  const asil = ciktilar.filter(c => !c.araUrun);
+  const teslim = asil.filter(c => c.durum === 'teslim').length;
+  $('teslim-dolu').style.width = asil.length ? `${(teslim / asil.length * 100).toFixed(1)}%` : '0%';
+  $('teslim-metin').textContent = t('anasayfa.teslim.metin', { n: teslim, toplam: asil.length });
+  for (const c of ciktilar) {
+    const yer = document.querySelector(`[data-cikti="${c.slug}"]`);
+    if (yer) { yer.textContent = t(`cikti.durum.${c.durum}`); yer.dataset.durum = c.durum; }
+  }
+}
+
 function yaklasanlariCiz(etkinlikler) {
   const kutu = $('yaklasan');
   const simdi = bugun();
@@ -183,6 +210,8 @@ function ortaklariCiz(etkinlikler) {
     const { etkinlikler } = await iste('api/etkinlikler');
     sayaclariDoldur(etkinlikler);
     ilerlemeyiCiz();
+    faaliyetleriCiz(etkinlikler);
+    iste('api/ciktilar').then(v => ciktilariCiz(v.ciktilar)).catch(err => console.error(err));
     yaklasanlariCiz(etkinlikler);
     ispaketleriniCiz(etkinlikler);
     ortaklariCiz(etkinlikler);

@@ -1,5 +1,5 @@
 import {
-  durum, t, baslat, ceviriyiUygula, ortakAdi, ortakKisa, tamTarih, bugun,
+  durum, t, baslat, ceviriyiUygula, ortakAdi, ortakKisa, tamTarih, bugun, onayla, bildir,
 } from './ortak.js';
 
 const $ = secici => document.querySelector(secici);
@@ -85,12 +85,18 @@ async function yonlendir() {
 }
 
 /* Düzenleyicide kaydedilmemiş değişiklik varsa başka görünüme geçmeden sorulur. */
-window.addEventListener('hashchange', () => {
-  if (kirli && !confirm(t('form.onay.kaydedilmemis'))) {
+window.addEventListener('hashchange', async () => {
+  if (kirli) {
+    /* Önce eski adrese dönülür, sonra sorulur: onay kutusu beklerken adres
+       çubuğu yeni görünümü göstermesin. Onaylanırsa hedefe yeniden gidilir. */
+    const hedef = location.hash;
     history.replaceState(null, '', sonHash || location.pathname);
+    if (!(await onayla(t('form.onay.kaydedilmemis'), { evet: t('genel.vazgecKapat'), tehlike: true }))) return;
+    kirli = false;
+    location.hash = hedef;
     return;
   }
-  kirli = false; sonHash = location.hash;
+  sonHash = location.hash;
   yonlendir();
 });
 window.addEventListener('beforeunload', olay => { if (kirli) olay.preventDefault(); });
@@ -240,15 +246,7 @@ async function listeAc() {
   $('#form-listesi').innerHTML = `<p class="bos-durum">${kacis(t('genel.yukleniyor'))}</p>`;
   formlar = await api('api/formlar');
   listeCiz();
-  if (bildirim) { $('#sayfa-hata').textContent = ''; bildirimGoster(bildirim); bildirim = ''; }
-}
-
-function bildirimGoster(metin, hedef = '#liste-gorunum') {
-  const not = document.createElement('p');
-  not.className = 'fp-not fp-bildirim';
-  not.setAttribute('role', 'status');
-  not.textContent = metin;
-  $(hedef).prepend(not);
+  if (bildirim) { $('#sayfa-hata').textContent = ''; bildir(bildirim); bildirim = ''; }
 }
 
 /** Hedef kitle metni: "Bütün ortak kurumlar" ya da "3 kurum". */
@@ -332,7 +330,7 @@ function listeCiz() {
 
 /* Yayımlama: taslak form ortaklara açılır. */
 async function formYayimla(form) {
-  if (!confirm(t('form.onay.yayimla', { baslik: form.baslik, hedef: hedefMetni(form) }))) return false;
+  if (!(await onayla(t('form.onay.yayimla', { baslik: form.baslik, hedef: hedefMetni(form) }), { evet: t('form.yayimla') }))) return false;
   await api(`api/formlar/${form.id}/durum`, { method: 'PUT', body: JSON.stringify({ durum: 'yayinda' }) });
   return true;
 }
@@ -620,8 +618,8 @@ function duzenleyiciOlaylariniKur() {
 
   $('#duzenle-durum').addEventListener('click', async olay => {
     if (!olay.target.closest('[data-taslagaal]')) return;
-    if (kirli && !confirm(t('form.onay.kaydedilmemis'))) return;
-    if (!confirm(t('form.onay.taslagaAl'))) return;
+    if (kirli && !(await onayla(t('form.onay.kaydedilmemis'), { evet: t('genel.vazgecKapat'), tehlike: true }))) return;
+    if (!(await onayla(t('form.onay.taslagaAl')))) return;
     try {
       await api(`api/formlar/${taslak.id}/durum`, { method: 'PUT', body: JSON.stringify({ durum: 'taslak' }) });
       kirli = false;
@@ -664,7 +662,7 @@ function duzenleyiciOlaylariniKur() {
 
   const etkinlestir = kart => sorulariCiz([Number(kart.dataset.q), '[data-field="title"]']);
 
-  $('#soru-listesi').addEventListener('click', olay => {
+  $('#soru-listesi').addEventListener('click', async olay => {
     const onizleme = olay.target.closest('.is-onizleme');
     if (onizleme) return etkinlestir(onizleme);
     const dugme = olay.target.closest('[data-act]');
@@ -694,12 +692,12 @@ function duzenleyiciOlaylariniKur() {
     if (act === 'sil') {
       /* Yanıt almış soru silinmez, kaldırılır: yanıtları raporda kalır, geri alınabilir. */
       if (yanitAldiMi(q)) {
-        if (!confirm(t('form.onay.soruKaldir', { soru: q.title }))) return;
+        if (!(await onayla(t('form.onay.soruKaldir', { soru: q.title })))) return;
         q.archived = true; q.required = false;
         const sonraki = liste.findIndex((x, i) => i > index && !x.archived);
         return sorulariCiz([sonraki >= 0 ? sonraki : Math.max(0, liste.findIndex(x => !x.archived)), '[data-field="title"]']);
       }
-      if (q.title && !confirm(t(bolumMu(q) ? 'form.onay.bolumSil' : 'form.onay.soruSil', { soru: q.title }))) return;
+      if (q.title && !(await onayla(t(bolumMu(q) ? 'form.onay.bolumSil' : 'form.onay.soruSil', { soru: q.title }), { evet: t('genel.sil'), tehlike: true }))) return;
       liste.splice(index, 1);
       return sorulariCiz([Math.min(index, liste.length - 1), '[data-field="title"]']);
     }
@@ -757,7 +755,7 @@ function duzenleyiciOlaylariniKur() {
 
   $('#sil-form').onclick = async () => {
     const baslik = $('#baslik-duzenleyici').textContent.trim();
-    if (!confirm(t('form.onay.formSil', { baslik }) + (taslak.yanitSayisi ? ' ' + t('form.onay.formSilYanit', { n: taslak.yanitSayisi }) : ''))) return;
+    if (!(await onayla(t('form.onay.formSil', { baslik }) + (taslak.yanitSayisi ? ' ' + t('form.onay.formSilYanit', { n: taslak.yanitSayisi }) : ''), { evet: t('genel.sil'), tehlike: true }))) return;
     try {
       await api('api/formlar/' + taslak.id, { method: 'DELETE' });
       kirli = false;
@@ -843,10 +841,10 @@ async function formKaydet({ yayimla = false } = {}) {
     renames: adDegisimleri(),
   };
 
-  if (yayimla && !confirm(t('form.onay.yayimla', {
+  if (yayimla && !(await onayla(t('form.onay.yayimla', {
     baslik: govde.baslik.trim(),
     hedef: hedefMetni({ hedef, koordinatorDoldurur: govde.koordinatorDoldurur }),
-  }))) return;
+  }), { evet: t('form.yayimla') }))) return;
 
   dugme.disabled = true;
   try {
@@ -1153,7 +1151,7 @@ function doldurOlaylariniKur() {
     }
 
     if (hedef.closest('[data-taslak-sil]')) {
-      if (!confirm(t('form.onay.taslakSil'))) return;
+      if (!(await onayla(t('form.onay.taslakSil'), { evet: t('genel.sil'), tehlike: true }))) return;
       clearTimeout(taslakZamanlayici); taslakZamanlayici = null;
       try { await api(`api/formlar/${dolduruluyor.id}/taslak`, { method: 'DELETE' }); await doldurAc(dolduruluyor.id); }
       catch (hata) { $('#doldur-form .fp-eylem .hata').textContent = hata.message; }
@@ -1161,7 +1159,7 @@ function doldurOlaylariniKur() {
     }
 
     if (hedef.closest('[data-hepsini-temizle]')) {
-      if (!confirm(t('form.onay.formuTemizle'))) return;
+      if (!(await onayla(t('form.onay.formuTemizle'), { tehlike: true }))) return;
       for (const girdi of $$('#doldur-form input, #doldur-form textarea, #doldur-form select')) {
         if (girdi.type === 'checkbox' || girdi.type === 'radio') girdi.checked = false;
         else if (girdi.type !== 'file') girdi.value = '';
@@ -1388,7 +1386,7 @@ function sonucOlaylariniKur() {
 
   $('#yanit-tablo').addEventListener('click', async olay => {
     const dugme = olay.target.closest('[data-sil]');
-    if (!dugme || !confirm(t('form.onay.yanitSil', { kim: dugme.dataset.ad }))) return;
+    if (!dugme || !(await onayla(t('form.onay.yanitSil', { kim: dugme.dataset.ad }), { evet: t('genel.sil'), tehlike: true }))) return;
     try {
       await api(`api/formlar/${sonuclar.form.id}/yanitlar/${dugme.dataset.sil}`, { method: 'DELETE' });
       await sonuclariAc(sonuclar.form.id);
@@ -1400,14 +1398,14 @@ function sonucOlaylariniKur() {
     const dugme = olay.target.closest('[data-hatirlat]');
     if (!dugme) return;
     const hepsi = dugme.dataset.hatirlat === 'hepsi';
-    if (hepsi && !confirm(t('form.onay.hatirlat', { n: sonuclar.bekleyen.length }))) return;
+    if (hepsi && !(await onayla(t('form.onay.hatirlat', { n: sonuclar.bekleyen.length })))) return;
     dugme.disabled = true;
     try {
       const gonderildi = await api(`api/formlar/${sonuclar.form.id}/hatirlat`,
         { method: 'POST', body: JSON.stringify(hepsi ? {} : { kisiler: [Number(dugme.dataset.hatirlat)] }) });
       await sonuclariAc(sonuclar.form.id);
       yanitSekmesi('bekleyen');
-      bildirimGoster(t('form.bildirim.hatirlatildi', { n: gonderildi.sayi }), '#yanit-bekleyen');
+      bildir(t('form.bildirim.hatirlatildi', { n: gonderildi.sayi }));
     } catch (hata) { $('#sayfa-hata').textContent = hata.message; dugme.disabled = false; }
   });
 }

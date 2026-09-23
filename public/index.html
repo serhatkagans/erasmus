@@ -22,12 +22,11 @@
     <!-- Menü ortak.js'te tek listeden kurulur (menuyuKur): her sayfada aynı. -->
     <nav class="gezinme" id="gezinme" data-t-etiket="menu.ana"></nav>
     <div class="ust-sag">
-      <span id="kullanici-adi" class="kullanici-rozet" hidden></span>
       <span id="hatirlatici" class="hatirlatici" hidden></span>
       <div id="dil-secici" class="dil-secici" hidden></div>
-      <button id="parola-dugme" class="dugme dugme-hayalet" hidden data-t="menu.parola"></button>
+      <div id="hesap" class="hesap" hidden></div>
       <a id="giris-baglanti" class="dugme dugme-hayalet" href="giris.html" data-t="menu.giris"></a>
-      <button id="cikis-dugme" class="dugme dugme-hayalet" hidden data-t="menu.cikis"></button>
+      <button id="menu-dugme" class="menu-dugme" type="button" aria-expanded="false" aria-controls="gezinme" hidden><span aria-hidden="true">☰</span> <span data-t="menu.menu"></span></button>
     </div>
   </div>
 </header>
@@ -50,10 +49,22 @@
         <div class="sayac"><strong id="sayac-ortak">—</strong><span data-t="anasayfa.sayac.ortak"></span></div>
         <div class="sayac"><strong id="sayac-ulke">—</strong><span data-t="anasayfa.sayac.ulke"></span></div>
         <div class="sayac"><strong id="sayac-etkinlik">—</strong><span data-t="anasayfa.sayac.etkinlik"></span></div>
-        <div class="ilerleme">
+        <!-- İki ayrı ölçü: takvimde geçen süre ve gerçekten tamamlanan iş.
+             Tek çubuk ikisini karıştırıyordu (süre geçince "ilerleme" artıyordu). -->
+        <div class="ilerleme ilerleme-sure">
           <span class="ustbaslik" data-t="anasayfa.ilerleme.baslik"></span>
           <div class="ilerleme-ray"><div id="ilerleme-dolu" class="ilerleme-dolu"></div></div>
           <div class="ilerleme-alt"><span id="ilerleme-metin"></span><span id="ilerleme-sure"></span></div>
+        </div>
+        <div class="ilerleme ilerleme-is">
+          <span class="ustbaslik" data-t="anasayfa.faaliyet.baslik"></span>
+          <div class="ilerleme-ray"><div id="faaliyet-dolu" class="ilerleme-dolu"></div></div>
+          <div class="ilerleme-alt"><span id="faaliyet-metin"></span><span id="faaliyet-devam"></span></div>
+        </div>
+        <div class="ilerleme ilerleme-is">
+          <span class="ustbaslik" data-t="anasayfa.teslim.baslik"></span>
+          <div class="ilerleme-ray"><div id="teslim-dolu" class="ilerleme-dolu"></div></div>
+          <div class="ilerleme-alt"><span id="teslim-metin"></span><a class="metin-bag" href="ciktilar.html" data-t="anasayfa.teslim.tumu"></a></div>
         </div>
       </div>
     </div>
@@ -99,12 +110,12 @@
         <p data-t="anasayfa.cikti.aciklama"></p>
       </div>
       <div class="izgara">
-        <article class="kart"><div class="kart-numara">1</div><h3 data-t="anasayfa.cikti.1.baslik"></h3><p data-t="anasayfa.cikti.1.metin"></p></article>
-        <article class="kart"><div class="kart-numara">2</div><h3 data-t="anasayfa.cikti.2.baslik"></h3><p data-t="anasayfa.cikti.2.metin"></p></article>
-        <article class="kart"><div class="kart-numara">3</div><h3 data-t="anasayfa.cikti.3.baslik"></h3><p data-t="anasayfa.cikti.3.metin"></p></article>
-        <article class="kart"><div class="kart-numara">4</div><h3 data-t="anasayfa.cikti.4.baslik"></h3><p data-t="anasayfa.cikti.4.metin"></p></article>
-        <article class="kart"><div class="kart-numara">5</div><h3 data-t="anasayfa.cikti.5.baslik"></h3><p data-t="anasayfa.cikti.5.metin"></p></article>
-        <article class="kart"><div class="kart-numara">6</div><h3 data-t="anasayfa.cikti.6.baslik"></h3><p data-t="anasayfa.cikti.6.metin"></p></article>
+        <a class="kart kart-bag" href="ciktilar.html#ihtiyac-analizi"><div class="kart-numara">1</div><h3 data-t="anasayfa.cikti.1.baslik"></h3><p data-t="anasayfa.cikti.1.metin"></p><span class="kart-durum" data-cikti="ihtiyac-analizi"></span></a>
+        <a class="kart kart-bag" href="ciktilar.html#ekitap"><div class="kart-numara">2</div><h3 data-t="anasayfa.cikti.2.baslik"></h3><p data-t="anasayfa.cikti.2.metin"></p><span class="kart-durum" data-cikti="ekitap"></span></a>
+        <a class="kart kart-bag" href="ciktilar.html#proje-formati"><div class="kart-numara">3</div><h3 data-t="anasayfa.cikti.3.baslik"></h3><p data-t="anasayfa.cikti.3.metin"></p><span class="kart-durum" data-cikti="proje-formati"></span></a>
+        <a class="kart kart-bag" href="ciktilar.html#egitim-modulu"><div class="kart-numara">4</div><h3 data-t="anasayfa.cikti.4.baslik"></h3><p data-t="anasayfa.cikti.4.metin"></p><span class="kart-durum" data-cikti="egitim-modulu"></span></a>
+        <a class="kart kart-bag" href="ciktilar.html#arac-seti"><div class="kart-numara">5</div><h3 data-t="anasayfa.cikti.5.baslik"></h3><p data-t="anasayfa.cikti.5.metin"></p><span class="kart-durum" data-cikti="arac-seti"></span></a>
+        <a class="kart kart-bag" href="ciktilar.html#politika-raporu"><div class="kart-numara">6</div><h3 data-t="anasayfa.cikti.6.baslik"></h3><p data-t="anasayfa.cikti.6.metin"></p><span class="kart-durum" data-cikti="politika-raporu"></span></a>
       </div>
     </div>
   </section>

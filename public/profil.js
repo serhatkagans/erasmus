@@ -1,4 +1,4 @@
-import { baslat, iste, t, durum, ortakAdi, ortakKisa, yerAdi } from './ortak.js';
+import { baslat, iste, t, durum, ortakAdi, ortakKisa, yerAdi, onayla, bildir } from './ortak.js';
 
 /**
  * Herkese açık profil kartı: `profil.html?u=<kullanici>`. Oturum istemez;
@@ -95,7 +95,7 @@ function avatariCiz(kisi) {
     });
 
     kaldir.addEventListener('click', async () => {
-      if (!confirm(t('profil.foto.kaldirOnay'))) return;
+      if (!(await onayla(t('profil.foto.kaldirOnay'), { evet: t('profil.foto.kaldir'), tehlike: true }))) return;
       hata.textContent = '';
       try {
         ({ foto: kisi.foto } = await iste(yol, { method: 'DELETE' }));

@@ -28,16 +28,36 @@ const etkinlik = (uzer = {}) => ({
   ...uzer,
 });
 
-test('program herkese açık, yazma değil', async () => {
+test('platform dışarıya kapalı: oturumsuz kişi yalnızca giriş ve profil kartını görür', async () => {
   const anonim = await istemci(sunucu);
 
-  const liste = await anonim.iste('/api/etkinlikler');
-  assert.equal(liste.durum, 200);
-  assert.equal(liste.veri.etkinlikler.length, 14, 'başvurudaki resmî program görünür');
-
-  /* Giriş yapmamış kişi yazamaz. */
+  /* Veri uçları 401. */
+  for (const yol of ['/api/etkinlikler', '/api/foto/1', '/api/ekip', '/api/formlar', '/api/klasorler', '/api/hatirlaticilar', '/api/ceviri-durumu', '/takvim.ics']) {
+    assert.equal((await anonim.iste(yol)).durum, 401, yol);
+  }
   const yazma = await anonim.iste('/api/etkinlikler', { method: 'POST', body: etkinlik() });
   assert.equal(yazma.durum, 401);
+
+  /* Sayfalar girişe yönlenir; geri dönülecek adres taşınır. */
+  const ana = await anonim.iste('/');
+  assert.equal(ana.durum, 302);
+  assert.equal(ana.basliklar.get('location'), 'giris.html');
+  const takvim = await anonim.iste('/takvim.html?gorunum=liste');
+  assert.equal(takvim.durum, 302);
+  assert.equal(takvim.basliklar.get('location'), 'giris.html?geri=' + encodeURIComponent('takvim.html?gorunum=liste'));
+
+  /* Açık kalanlar: giriş sayfası, açılış verisi, profil kartı, stil/betik. */
+  for (const yol of ['/giris.html', '/profil.html', '/api/acilis', '/style.css', '/giris.js', '/logo.png']) {
+    assert.equal((await anonim.iste(yol)).durum, 200, yol);
+  }
+  assert.equal((await anonim.iste(`/api/profil?u=${ORTAK.kullanici}`)).durum, 200);
+
+  /* Giriş yapan program verisini görür. */
+  const ortak = await istemci(sunucu, ORTAK);
+  const liste = await ortak.iste('/api/etkinlikler');
+  assert.equal(liste.durum, 200);
+  assert.equal(liste.veri.etkinlikler.length, 14, 'başvurudaki resmî program görünür');
+  assert.equal((await ortak.iste('/')).durum, 200);
 });
 
 test('Origin başlığı olmayan yazma reddedilir', async () => {
@@ -136,13 +156,16 @@ test('proje dışı ve takvimde olmayan tarih reddedilir', async () => {
 test('belge: giriş şart, ortak yalnızca kendi kurumuna üretir', async () => {
   const koordinator = await istemci(sunucu, KOORDINATOR);
   /* Belge üretilebilmesi için iki kurumda birer kişi. */
-  const ekle = async (partner, ad) => {
-    const y = await koordinator.iste('/api/ekip/uye', { method: 'POST', body: { partner, ad, rol: '', eposta: '' } });
+  /* Ekip üyesi sistemdeki bir hesaptır: kurumun kendi hesabı eklenir. */
+  const adaylar = (await koordinator.iste('/api/ekip')).veri.adaylar;
+  const hesap = kullanici => adaylar.find(a => a.ad === HESAPLAR.find(h => h.kullanici === kullanici).ad).id;
+  const ekle = async (partner, userId) => {
+    const y = await koordinator.iste('/api/ekip/uye', { method: 'POST', body: { partner, userId, rol: '', eposta: '' } });
     assert.equal(y.durum, 201, JSON.stringify(y.veri));
     return y.veri.id;
   };
-  const geoUye = await ekle('geoclub', 'Ana Popescu');
-  const hbvUye = await ekle('hbv', 'Test Koordinatör');
+  const geoUye = await ekle('geoclub', hesap('test-ortak'));
+  const hbvUye = await ekle('hbv', hesap('test-koordinator'));
 
   const soru = alicilar => `/api/belge?tur=katilim&imzaAd=Imza%20Sahibi&alicilar=${alicilar}`;
 
@@ -155,7 +178,7 @@ test('belge: giriş şart, ortak yalnızca kendi kurumuna üretir', async () => 
   const kendi = await ortak.iste(soru(`uye:${geoUye}`));
   assert.equal(kendi.durum, 200);
   assert.equal(kendi.veri.belgeler.length, 1);
-  assert.equal(kendi.veri.belgeler[0].ad, 'Ana Popescu');
+  assert.equal(kendi.veri.belgeler[0].ad, 'Test Ortak', 'ad ekip üyesinin hesabından gelir');
 
   const baskasi = await ortak.iste(soru(`uye:${hbvUye}`));
   assert.equal(baskasi.durum, 403);
@@ -175,13 +198,39 @@ test('belge: giriş şart, ortak yalnızca kendi kurumuna üretir', async () => 
   assert.equal((await koordinator.iste(`/api/belge?tur=katilim&alicilar=uye:${geoUye}`)).durum, 400);
 });
 
-test('ekip: ortak başka kuruma üye ekleyemez', async () => {
-  const ortak = await istemci(sunucu, ORTAK);
-  const kendi = await ortak.iste('/api/ekip/uye', { method: 'POST', body: { partner: 'geoclub', ad: 'Mihai Ionescu' } });
-  assert.equal(kendi.durum, 201);
+test('ekip: üye sistemdeki bir hesaptır ve yalnızca kendi kurumunun ekibine girer', async () => {
+  const ortak2 = await istemci(sunucu, ORTAK2);            // CECF
+  const adaylar = (await ortak2.iste('/api/ekip')).veri.adaylar;
+  const cecfli = adaylar.find(a => a.partner === 'cecf');
+  const hbvli = adaylar.find(a => a.partner === 'hbv');
 
-  const baskasi = await ortak.iste('/api/ekip/uye', { method: 'POST', body: { partner: 'hbv', ad: 'Sızma Denemesi' } });
-  assert.equal(baskasi.durum, 403);
+  /* Başka kurumun ekibine ekleyemez (yetki). */
+  assert.equal((await ortak2.iste('/api/ekip/uye', { method: 'POST', body: { partner: 'hbv', userId: hbvli.id } })).durum, 403);
+  /* Kendi ekibine başka kurumdan birini koyamaz. */
+  assert.equal((await ortak2.iste('/api/ekip/uye', { method: 'POST', body: { partner: 'cecf', userId: hbvli.id } })).durum, 400);
+  /* Dışarıdan ad yazılamaz: hesap seçilmeli. */
+  assert.equal((await ortak2.iste('/api/ekip/uye', { method: 'POST', body: { partner: 'cecf', ad: 'Dışarıdan Biri' } })).durum, 400);
+
+  /* Kendi kurumunun hesabı eklenir; aynı kişi ikinci kez eklenemez. */
+  const eklendi = await ortak2.iste('/api/ekip/uye', { method: 'POST', body: { partner: 'cecf', userId: cecfli.id, rol: 'Proje sorumlusu' } });
+  assert.equal(eklendi.durum, 201);
+  assert.equal(eklendi.veri.ad, cecfli.ad, 'ad hesaptan gelir');
+  assert.equal((await ortak2.iste('/api/ekip/uye', { method: 'POST', body: { partner: 'cecf', userId: cecfli.id } })).durum, 409);
+
+  /* Koordinatöre de aynı kural: HBV'li biri CECF ekibine giremez. */
+  const koordinator = await istemci(sunucu, KOORDINATOR);
+  assert.equal((await koordinator.iste('/api/ekip/uye', { method: 'POST', body: { partner: 'cecf', userId: hbvli.id } })).durum, 400);
+
+  /* Düzenlemede kişi değişmez: gönderilen ad yok sayılır. */
+  const duzen = await ortak2.iste(`/api/ekip/uye/${eklendi.veri.id}`, { method: 'PUT', body: { ad: 'Başka Ad', rol: 'Eğitmen', eposta: '' } });
+  assert.equal(duzen.durum, 200);
+  assert.equal(duzen.veri.ad, cecfli.ad);
+  assert.equal(duzen.veri.rol, 'Eğitmen');
+
+  /* Ekipten çıkarılamaz — ne kurum ne koordinatör. */
+  assert.equal((await ortak2.iste(`/api/ekip/uye/${eklendi.veri.id}`, { method: 'DELETE' })).durum, 400);
+  assert.equal((await koordinator.iste(`/api/ekip/uye/${eklendi.veri.id}`, { method: 'DELETE' })).durum, 400);
+  assert.ok((await ortak2.iste('/api/ekip')).veri.uyeler.some(u => u.id === eklendi.veri.id));
 });
 
 test('rapor giriş ister', async () => {
@@ -674,4 +723,113 @@ test('hesap düzenleme: yalnızca koordinatör, kendi yetkisini düşüremez', a
   const benYol = `/api/kullanicilar/${ben.id}`;
   assert.equal((await koordinator.iste(benYol, { method: 'PUT', body: { ...ben, koordinator: false } })).durum, 400);
   assert.equal((await koordinator.iste(benYol, { method: 'PUT', body: ben })).durum, 200);
+});
+
+/* --- Çıktı kütüphanesi ------------------------------------------------------
+   Görmek her üyeye açık; durum ve dosya sorumlu kurumun ve koordinatörün;
+   sorumluyu ve tarihi yalnızca koordinatör değiştirir. */
+const dosyaYukle = (istemci, yol, ad = 'rapor.pdf') =>
+  istemci.iste(yol, { method: 'POST', ham: Buffer.from('%PDF-1.4 deneme'), headers: { 'x-file-name': encodeURIComponent(ad) } });
+
+test('çıktı kütüphanesi: sorumlu ve tarih takvimden türer, yetki sorumlu kurumda', async () => {
+  const anonim = await istemci(sunucu);
+  assert.equal((await anonim.iste('/api/ciktilar')).durum, 401);
+
+  const ortak = await istemci(sunucu, ORTAK);          // GEO CLUB
+  const liste = await ortak.iste('/api/ciktilar');
+  assert.equal(liste.durum, 200);
+  assert.equal(liste.veri.ciktilar.length, 7);
+  const ia = liste.veri.ciktilar.find(c => c.slug === 'ihtiyac-analizi');
+  assert.equal(ia.sorumlu, 'unisalento', 'lider kurum takvimden');
+  assert.equal(ia.teslim, '2027-02-28', 'teslim = çıktı üretim döneminin bitişi');
+  assert.equal(liste.veri.ciktilar.find(c => c.slug === 'arac-seti').sorumlu, null, 'başvuruda yok, uydurulmaz');
+
+  /* Sorumlu olmayan kurum değiştiremez. */
+  assert.equal((await ortak.iste('/api/ciktilar/ihtiyac-analizi', { method: 'PUT', body: { durum: 'teslim' } })).durum, 403);
+  assert.equal((await dosyaYukle(ortak, '/api/ciktilar/ihtiyac-analizi/dosya?dil=en')).durum, 403);
+
+  /* Koordinatör araç setinin sorumlusunu ve tarihini belirler. */
+  const koordinator = await istemci(sunucu, KOORDINATOR);
+  assert.equal((await koordinator.iste('/api/ciktilar/arac-seti', { method: 'PUT', body: { durum: 'planlandi', sorumlu: 'geoclub', teslim: '2027-12-31' } })).durum, 200);
+  assert.equal((await koordinator.iste('/api/ciktilar/arac-seti', { method: 'PUT', body: { durum: 'uydurma' } })).durum, 400);
+  assert.equal((await koordinator.iste('/api/ciktilar/arac-seti', { method: 'PUT', body: { durum: 'teslim', disUrl: 'javascript:alert(1)' } })).durum, 400);
+
+  /* Artık sorumlu GEO CLUB: durumu günceller ama işi devredemez. */
+  assert.equal((await ortak.iste('/api/ciktilar/arac-seti', { method: 'PUT', body: { durum: 'incelemede', sorumlu: 'cecf', teslim: '2028-01-01' } })).durum, 200);
+  let c = (await ortak.iste('/api/ciktilar')).veri.ciktilar.find(x => x.slug === 'arac-seti');
+  assert.equal(c.durum, 'incelemede');
+  assert.equal(c.sorumlu, 'geoclub');
+  assert.equal(c.teslim, '2027-12-31');
+
+  /* Dil dil sürüm. */
+  assert.equal((await dosyaYukle(ortak, '/api/ciktilar/arac-seti/dosya?dil=en')).durum, 201);
+  const ikinci = await dosyaYukle(ortak, '/api/ciktilar/arac-seti/dosya?dil=en');
+  assert.equal(ikinci.veri.no, 2);
+  assert.equal((await dosyaYukle(ortak, '/api/ciktilar/arac-seti/dosya?dil=xx')).durum, 400);
+  assert.equal((await dosyaYukle(ortak, '/api/ciktilar/arac-seti/dosya?dil=tr', 'virus.exe')).durum, 400);
+  c = (await ortak.iste('/api/ciktilar')).veri.ciktilar.find(x => x.slug === 'arac-seti');
+  assert.equal(c.diller.find(d => d.dil === 'en').surumler.length, 2);
+
+  /* Her üye indirir (ek olarak); yalnızca sorumlu/koordinatör siler. */
+  const ortak2 = await istemci(sunucu, ORTAK2);
+  const indir = await ortak2.iste(`/api/ciktilar/dosya/${ikinci.veri.id}`);
+  assert.equal(indir.durum, 200);
+  assert.match(indir.basliklar.get('content-disposition'), /^attachment/);
+  assert.equal((await ortak2.iste(`/api/ciktilar/dosya/${ikinci.veri.id}`, { method: 'DELETE' })).durum, 403);
+  assert.equal((await ortak.iste(`/api/ciktilar/dosya/${ikinci.veri.id}`, { method: 'DELETE' })).durum, 200);
+});
+
+/* --- Faaliyet dosyası -------------------------------------------------------- */
+test('faaliyet dosyası: lider kurum yükler, parçalar türe göre, özet takvimde', async () => {
+  const ortak = await istemci(sunucu, ORTAK);           // GEO CLUB
+  const etkinlikler = (await ortak.iste('/api/etkinlikler')).veri.etkinlikler;
+  const sanal = etkinlikler.find(e => e.slug === 'wp4-a3-va2');          // lider GEO CLUB, sanal
+  const final = etkinlikler.find(e => e.slug === 'wp4-a4-tpm6-final');   // lider GEO CLUB, konferans
+  const cikti = etkinlikler.find(e => e.slug === 'wp2-a1-ihtiyac-analizi');
+  assert.deepEqual(sanal.dosya, { tamam: 0, toplam: 4, eksik: ['gundem', 'yoklama', 'tutanak', 'anket'] });
+  assert.equal(final.dosya.toplam, 6);
+  assert.equal(cikti.dosya, null, 'çıktı üretim döneminin faaliyet dosyası yok');
+
+  const anonim = await istemci(sunucu);
+  assert.equal((await anonim.iste(`/api/etkinlikler/${sanal.id}/dosya`)).durum, 401);
+
+  /* Başka kurum görür ama yükleyemez. */
+  const ortak2 = await istemci(sunucu, ORTAK2);
+  const gorunum = await ortak2.iste(`/api/etkinlikler/${sanal.id}/dosya`);
+  assert.equal(gorunum.durum, 200);
+  assert.equal(gorunum.veri.yetkili, false);
+  assert.deepEqual(gorunum.veri.secenekler, []);
+  assert.equal((await dosyaYukle(ortak2, `/api/etkinlikler/${sanal.id}/dosya?tur=gundem`)).durum, 403);
+  assert.equal((await ortak2.iste(`/api/etkinlikler/${sanal.id}/anket`, { method: 'PUT', body: { formId: null } })).durum, 403);
+
+  /* Lider kurum yükler; türe uymayan parça reddedilir. */
+  const yuklendi = await dosyaYukle(ortak, `/api/etkinlikler/${sanal.id}/dosya?tur=gundem`, 'gundem.docx');
+  assert.equal(yuklendi.durum, 201);
+  assert.equal((await dosyaYukle(ortak, `/api/etkinlikler/${sanal.id}/dosya?tur=infopack`)).durum, 400, 'sanal toplantıda bilgi paketi yok');
+  assert.equal((await dosyaYukle(ortak, `/api/etkinlikler/${sanal.id}/dosya?tur=foto`)).durum, 400);
+  assert.equal((await ortak.iste(`/api/etkinlikler/${sanal.id}/anket`, { method: 'PUT', body: { formId: 999999 } })).durum, 400);
+  assert.equal((await ortak.iste(`/api/etkinlikler/${sanal.id}/anket`, { method: 'PUT', body: { formId: null } })).durum, 200);
+
+  const sonra = (await ortak.iste('/api/etkinlikler')).veri.etkinlikler.find(e => e.id === sanal.id);
+  assert.deepEqual(sonra.dosya, { tamam: 1, toplam: 4, eksik: ['yoklama', 'tutanak', 'anket'] });
+
+  /* İndirme her üyeye; silme lider kuruma. */
+  assert.equal((await ortak2.iste(`/api/faaliyet-dosya/${yuklendi.veri.id}`)).durum, 200);
+  assert.equal((await ortak2.iste(`/api/faaliyet-dosya/${yuklendi.veri.id}`, { method: 'DELETE' })).durum, 403);
+  assert.equal((await ortak.iste(`/api/faaliyet-dosya/${yuklendi.veri.id}`, { method: 'DELETE' })).durum, 200);
+});
+
+/* --- Pano ---------------------------------------------------------------------- */
+test('pano: kurum kapsamlı; genel durum yalnızca koordinatörde', async () => {
+  assert.equal((await (await istemci(sunucu)).iste('/api/pano')).durum, 401);
+  const ortak = await istemci(sunucu, ORTAK);
+  const p = await ortak.iste('/api/pano');
+  assert.equal(p.durum, 200);
+  assert.equal(p.veri.kurum, 'geoclub');
+  assert.equal(p.veri.genel, null);
+  for (const alan of ['yaklasan', 'yaklasanGorev', 'geciken', 'bekleyenForm', 'dosyalar', 'eksikDosya', 'ciktilar', 'durumGuncelle']) {
+    assert.ok(Array.isArray(p.veri[alan]), alan);
+  }
+  const k = await (await istemci(sunucu, KOORDINATOR)).iste('/api/pano');
+  assert.equal(k.veri.genel.length, 7);
 });

@@ -7,8 +7,13 @@ import { send, body } from '../lib/http.mjs';
 /**
  * Ülke ekipleri ve görev tanımlama.
  *
- * EKİP her ortak kurumun kendi kadrosudur: ad, rol, e-posta. Kurum kendi
- * ekibini yönetir, koordinatör hepsini görür ve düzenleyebilir.
+ * EKİP her ortak kurumun kendi kadrosudur: rol ve e-postayla birlikte.
+ * Ekip üyesi DIŞARIDAN YAZILAN BİR AD DEĞİL, sistemdeki bir kullanıcı
+ * hesabıdır ve yalnızca KENDİ KURUMUNUN ekibine eklenebilir (kullanıcı
+ * kararı, 23 Eylül 2026: "BTE üniversiteden birini ekip üyesi olarak
+ * atayamamalı"). Bu kural koordinatöre de uygulanır: koordinatör her
+ * kurumun ekibini düzenler, ama HBV'li birini BTE ekibine koyamaz.
+ * Kurum kendi ekibini yönetir, koordinatör hepsini görür ve düzenleyebilir.
  *
  * GÖREV bir KURUMA tanımlanır, kişiye bağlanması isteğe bağlıdır. 24 aylık
  * bir projede kişiler değişir; görev kurumda kalmalı ki devir sırasında
@@ -22,7 +27,7 @@ import { send, body } from '../lib/http.mjs';
  *   görevi kaldırmak onu tanımlayanın işidir.
  */
 export function ekipRoutes({ db }) {
-  const uyeShape = r => ({ id: r.id, partner: r.partner, ad: r.ad, rol: r.rol, eposta: r.eposta, aktif: !!r.aktif });
+  const uyeShape = r => ({ id: r.id, partner: r.partner, ad: r.ad, rol: r.rol, eposta: r.eposta, aktif: !!r.aktif, userId: r.user_id ?? null });
   const gorevShape = r => ({
     id: r.id, partner: r.partner, uyeId: r.uye_id, wp: r.wp, etkinlikId: r.event_id,
     baslik: r.baslik, aciklama: r.aciklama, sonTarih: r.son_tarih, durum: r.durum,
@@ -85,7 +90,10 @@ export function ekipRoutes({ db }) {
     if (url.pathname === '/api/ekip' && req.method === 'GET') {
       const uyeler = (await db.all('SELECT * FROM team ORDER BY partner, ad')).map(uyeShape);
       const gorevler = (await db.all('SELECT * FROM tasks ORDER BY son_tarih, id')).map(gorevShape);
-      return send(res, 200, { uyeler, gorevler, gorevDurumlari: taskStatuses, ilerlemeAdimi: PROGRESS_STEP });
+      /* Eklenebilecek kişiler: sistemdeki hesaplar, kurumlarıyla. */
+      const adaylar = (await db.all('SELECT id,username,ad,partner FROM users ORDER BY partner, ad'))
+        .map(k => ({ id: k.id, ad: k.ad || k.username, partner: k.partner }));
+      return send(res, 200, { uyeler, gorevler, adaylar, gorevDurumlari: taskStatuses, ilerlemeAdimi: PROGRESS_STEP });
     }
 
     /* --- Ekip üyeleri ---------------------------------------------------- */
@@ -93,13 +101,17 @@ export function ekipRoutes({ db }) {
       const veri = await body(req);
       const partner = requireOneOf(veri.partner, partnerIds, 'Kurum');
       if (!yetkili(user, partner)) return send(res, 403, { error: 'Yalnızca kendi kurumunuzun ekibini düzenleyebilirsiniz.' });
+      const kisi = await db.get('SELECT id,username,ad,partner FROM users WHERE id=?', [Number(veri.userId)]);
+      if (!kisi) throw new ValidationError('ekip.hata.kisi');
+      if (kisi.partner !== partner) throw new ValidationError('ekip.hata.baskaKurum');
+      if (await db.get('SELECT id FROM team WHERE user_id=?', [kisi.id])) return send(res, 409, { error: 'ekip.hata.zatenVar' });
       const id = await db.insert(
-        'INSERT INTO team (partner,ad,rol,eposta,aktif,updated) VALUES (?,?,?,?,1,?)',
+        'INSERT INTO team (partner,ad,rol,eposta,aktif,updated,user_id) VALUES (?,?,?,?,1,?,?)',
         [partner,
-         requireText(veri.ad, 'Ad soyad', { max: 120 }),
+         kisi.ad || kisi.username,
          requireText(veri.rol, 'Rol', { max: 120, required: false }),
          requireText(veri.eposta, 'E-posta', { max: 200, required: false }),
-         new Date().toISOString()]);
+         new Date().toISOString(), kisi.id]);
       return send(res, 201, uyeShape(await uyeYukle(id)));
     }
 
@@ -111,8 +123,10 @@ export function ekipRoutes({ db }) {
 
       if (req.method === 'PUT') {
         const veri = await body(req);
+        /* Kişi değiştirilemez; hesaba bağlı üyede ad hesaptan gelir. Bağsız
+           eski kayıtta (bu kural gelmeden yazılmış) ad düzeltilebilir. */
         await db.run('UPDATE team SET ad=?,rol=?,eposta=?,aktif=?,updated=? WHERE id=?',
-          [requireText(veri.ad, 'Ad soyad', { max: 120 }),
+          [mevcut.user_id ? mevcut.ad : requireText(veri.ad, 'Ad soyad', { max: 120 }),
            requireText(veri.rol, 'Rol', { max: 120, required: false }),
            requireText(veri.eposta, 'E-posta', { max: 200, required: false }),
            veri.aktif === false ? 0 : 1,
@@ -121,8 +135,11 @@ export function ekipRoutes({ db }) {
       }
 
       if (req.method === 'DELETE') {
-        /* Görevler silinmez: şemadaki ON DELETE SET NULL sayesinde kuruma
-           ait kalır, yalnızca kişi bağı kopar. */
+        /* Hesaba bağlı ekip üyesi çıkarılamaz: kurumun kalıcı kadrosudur,
+           hesap silinince kendiliğinden gider (CASCADE). Yalnızca bu kural
+           gelmeden yazılmış, hesapsız eski kayıtlar silinebilir.
+           Görevler silinmez: ON DELETE SET NULL ile kurumda kalır. */
+        if (mevcut.user_id) return send(res, 400, { error: 'ekip.hata.silinmez' });
         await db.run('DELETE FROM team WHERE id=?', [id]);
         return send(res, 200, { ok: true });
       }

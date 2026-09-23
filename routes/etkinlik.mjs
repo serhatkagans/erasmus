@@ -4,6 +4,7 @@ import {
   MAX_RANGE_DAYS, MAX_TITLE, PROJECT,
 } from '../lib/data.mjs';
 import { MAX_PHOTOS, MAX_PHOTO_BYTES, PHOTO_TYPES, sniffPhoto } from '../lib/data.mjs';
+import { dosyaOzetleri } from '../lib/faaliyet.mjs';
 import { send, body, rawBody, ICS } from '../lib/http.mjs';
 import { buildIcs } from '../lib/ics.mjs';
 import { dictionary } from '../lib/i18n.mjs';
@@ -174,8 +175,12 @@ export function etkinlikRoutes({ db }) {
          her kart için sekiz megabaytlık veriyi taşımak listeyi kullanılmaz
          hâle getirirdi. Görseller `/api/foto/<id>` ile tek tek çekilir. */
       const fotolar = await db.all('SELECT id,event_id,ad FROM event_photos ORDER BY id');
+      /* Faaliyet dosyasının özeti ("4/6"): takvim listesi ve ana sayfa
+         aynı hesabı gösterir (lib/faaliyet.mjs). */
+      const ozet = await dosyaOzetleri(db);
       for (const e of rows) {
         e.fotolar = fotolar.filter(f => f.event_id === e.id).map(f => ({ id: f.id, ad: f.ad }));
+        e.dosya = ozet[e.id] || null;
       }
       return send(res, 200, { etkinlikler: rows, maxFoto: MAX_PHOTOS });
     }

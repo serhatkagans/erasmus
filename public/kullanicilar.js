@@ -1,4 +1,4 @@
-import { baslat, iste, t, durum, ortakAdi, ortakKisa } from './ortak.js';
+import { baslat, iste, t, durum, ortakAdi, ortakKisa, onayla, bildir } from './ortak.js';
 
 /**
  * Kullanıcılar: proje yöneticisi hesapları görür, açar, düzenler, siler.
@@ -96,12 +96,13 @@ let duzenlenen = null;
 let kutuyuAc = () => {};
 
 async function hesapSil(k) {
-  if (!confirm(t('kullanicilar.silOnay', { ad: k.ad || k.kullanici, kullanici: k.kullanici }))) return;
+  if (!(await onayla(t('kullanicilar.silOnay', { ad: k.ad || k.kullanici, kullanici: k.kullanici }), { evet: t('genel.sil'), tehlike: true }))) return;
   try {
     await iste(`api/kullanicilar/${k.id}`, { method: 'DELETE' });
     await yukle();
+    bildir(t('genel.silindi'));
   } catch (err) {
-    alert(err.message);
+    bildir(err.message, 'hata');
   }
 }
 
@@ -214,6 +215,7 @@ async function yukle() {
       }
       kutu.close();
       await yukle();
+      bildir(t('genel.kaydedildi'));
     } catch (err) {
       hata.textContent = err.message;
     } finally {

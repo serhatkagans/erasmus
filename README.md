@@ -86,13 +86,16 @@ Kurum kodları: `hbv`, `unisalento`, `geoclub`, `cecf`, `bte`, `educpro`,
 
 **Yetki modeli.** `--koordinator` bayrağı taşıyan hesap tüm kurumlar adına
 işlem yapar. Ortak hesabı yalnızca kendi kurumunun kayıtlarına dokunur.
-Program ve proje tanıtımı herkese açıktır; giriş yalnızca veri girmek için
-gerekir.
+Platform giriş gerektirir; oturumsuz ziyaretçiler giriş ekranına yönlendirilir.
+NFC profil kartları dışarıya açıktır. Ekip üyeleri aynı kurumun kayıtlı
+kullanıcı hesaplarından seçilir.
 
 ## Bölümler
 
 | Sayfa | Ne yapar |
 | --- | --- |
+| `pano.html` | Kurumun yaklaşan işleri, gecikmeleri, bekleyen formları ve eksik faaliyet dosyaları; koordinatör için genel durum |
+| `ciktilar.html` | Yedi proje çıktısı, sorumlu ve teslim takibi, dillere göre dosya sürümleri |
 | `index.html` | Proje tanıtımı, sayaçlar, ilerleme çubuğu, yaklaşan etkinlikler, hedefler, çıktılar, iş paketleri, ortak kurumlar |
 | `takvim.html` | Etkinlik programı: gün ızgarası, 24 aylık zaman çizelgesi, liste; filtreler, etkinlik ekleme/düzenleme, fotoğraf, faaliyet raporu |
 | `ekip.html` | Ülke ekipleri ve görev panosu |

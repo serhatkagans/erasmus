@@ -1,8 +1,8 @@
 import { baslat, iste } from './ortak.js';
 
 /**
- * Ortak girişi. Başarılı girişten sonra takvime yönlendirilir — giriş
- * yapmanın tek sebebi program üzerinde çalışmaktır.
+ * Giriş. Platform dışarıya kapalı: oturumsuz her sayfa isteği buraya
+ * `?geri=<sayfa>` ile yönlenir, girişten sonra o sayfaya dönülür.
  */
 (async () => {
   await baslat();
@@ -20,7 +20,11 @@ import { baslat, iste } from './ortak.js';
         method: 'POST',
         body: JSON.stringify({ kullanici: form.kullanici.value, parola: form.parola.value }),
       });
-      location.href = 'takvim.html';
+      /* Kapıdan yönlendirilen kişi istediği sayfaya döner. Yalnızca bu
+         sitenin sayfa adı kabul edilir; `geri=https://...` ile dışarı
+         yönlendirme (açık yönlendirme) mümkün olmasın. */
+      const geri = new URLSearchParams(location.search).get('geri') || '';
+      location.href = /^[a-z]+\.html(\?[\w=&%.-]*)?$/.test(geri) ? geri : 'pano.html';
     } catch (err) {
       hata.textContent = err.message;
       form.parola.value = '';

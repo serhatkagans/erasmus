@@ -23,12 +23,11 @@
     <!-- Menü ortak.js'te tek listeden kurulur (menuyuKur): her sayfada aynı. -->
     <nav class="gezinme" id="gezinme" data-t-etiket="menu.ana"></nav>
     <div class="ust-sag">
-      <span id="kullanici-adi" class="kullanici-rozet" hidden></span>
       <span id="hatirlatici" class="hatirlatici" hidden></span>
       <div id="dil-secici" class="dil-secici" hidden></div>
-      <button id="parola-dugme" class="dugme dugme-hayalet" hidden data-t="menu.parola"></button>
+      <div id="hesap" class="hesap" hidden></div>
       <a id="giris-baglanti" class="dugme dugme-hayalet" href="giris.html" data-t="menu.giris"></a>
-      <button id="cikis-dugme" class="dugme dugme-hayalet" hidden data-t="menu.cikis"></button>
+      <button id="menu-dugme" class="menu-dugme" type="button" aria-expanded="false" aria-controls="gezinme" hidden><span aria-hidden="true">☰</span> <span data-t="menu.menu"></span></button>
     </div>
   </div>
 </header>
@@ -37,14 +36,29 @@
   <section class="kapsayici sayfa-bas">
     <span class="ustbaslik" data-t="klasor.ustbaslik"></span>
     <h1 data-t="klasor.sayfa.baslik"></h1>
-    <p data-t="klasor.giris"></p>
-    <!-- Klasör yapısı belgesinin 1. bölümü, belgedeki metinle. -->
-    <h2 class="klasor-bolum-baslik" data-t="klasor.mantik"></h2>
-    <ul class="klasor-ilkeler">
-      <li><strong data-t="klasor.ilke.numara.baslik"></strong><span data-t="klasor.ilke.numara"></span></li>
-      <li><strong data-t="klasor.ilke.tek.baslik"></strong><span data-t="klasor.ilke.tek"></span></li>
-      <li><strong data-t="klasor.ilke.sorumluluk.baslik"></strong><span data-t="klasor.ilke.sorumluluk"></span></li>
-    </ul>
+
+    <!-- İşe odaklı başlangıç: en sık yapılan dört iş en üstte. -->
+    <div class="klasor-arac" id="klasor-arac" hidden>
+      <input type="search" id="klasor-ara" class="klasor-ara klasor-arac-ara" data-t-yer="klasor.dosyaAra" data-t-etiket="klasor.dosyaAra">
+      <div class="klasor-arac-dugmeler">
+        <button type="button" class="dugme dugme-ikincil" id="kurumum-dugme" aria-pressed="false" data-t="klasor.kurumum"></button>
+        <button type="button" class="dugme dugme-ikincil" id="son-dugme" aria-pressed="false" data-t="klasor.son"></button>
+        <button type="button" class="dugme dugme-birincil" id="yukle-dugme" data-t="klasor.dosyaYukle"></button>
+      </div>
+    </div>
+
+    <!-- Klasör yapısı belgesinin 1. bölümü, belgedeki metinle; açıklama
+         işin önüne geçmesin diye kapalı başlar. -->
+    <details class="klasor-hakkinda">
+      <summary data-t="klasor.hakkinda"></summary>
+      <p data-t="klasor.giris"></p>
+      <h2 class="klasor-bolum-baslik" data-t="klasor.mantik"></h2>
+      <ul class="klasor-ilkeler">
+        <li><strong data-t="klasor.ilke.numara.baslik"></strong><span data-t="klasor.ilke.numara"></span></li>
+        <li><strong data-t="klasor.ilke.tek.baslik"></strong><span data-t="klasor.ilke.tek"></span></li>
+        <li><strong data-t="klasor.ilke.sorumluluk.baslik"></strong><span data-t="klasor.ilke.sorumluluk"></span></li>
+      </ul>
+    </details>
   </section>
 
   <div class="kapsayici">
@@ -58,7 +72,6 @@
         <div class="klasor-yan-bas">
           <h2 id="klasor-agac-baslik" data-t="klasor.anaBasliklar"></h2>
           <p class="ipucu" data-t="klasor.anaBasliklar.not"></p>
-          <input type="search" id="klasor-ara" class="klasor-ara" data-t-yer="klasor.ara" data-t-etiket="klasor.ara">
           <label class="klasor-bos-sec"><input type="checkbox" id="klasor-bos"> <span data-t="klasor.bosGoster"></span></label>
           <p class="ipucu" id="klasor-ozet"></p>
         </div>
@@ -86,6 +99,24 @@
     </section>
   </div>
 </main>
+
+<dialog id="yukle-kutu" data-koru>
+  <form id="yukle-form" class="kutu-ic">
+    <div class="kutu-ust">
+      <h2 data-t="klasor.dosyaYukle"></h2>
+      <button type="button" class="kapat" data-kapat data-t-etiket="genel.kapat">×</button>
+    </div>
+    <p class="kutu-aciklama" data-t="klasor.yukleKutu.ipucu"></p>
+    <label class="alan"><span data-t="klasor.yukleKutu.klasor"></span><span id="yukle-klasor-yer"></span></label>
+    <label class="alan"><span data-t="klasor.yukleKutu.dosya"></span><input type="file" name="dosya" multiple required></label>
+    <label class="alan"><span data-t="klasor.yukle.aciklama"></span><input name="aciklama" maxlength="300"></label>
+    <p class="ipucu" id="yukle-sinir"></p>
+    <div class="kutu-eylem">
+      <button type="submit" class="dugme dugme-birincil" data-t="klasor.dosyaYukle"></button>
+      <button type="button" class="dugme dugme-ikincil" data-kapat data-t="genel.vazgec"></button>
+    </div>
+  </form>
+</dialog>
 
 <footer class="alt">
   <div class="kapsayici alt-ic">

@@ -4,12 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Ortak Girişi · E-YOUTHPRENEUR</title>
+<title>Panom · E-YOUTHPRENEUR</title>
 <link rel="icon" href="logo.png">
 <link rel="stylesheet" href="style.css">
-<script src="giris.js" type="module"></script>
+<script src="pano.js" type="module"></script>
 </head>
-<body data-t-sayfa="giris.baslik">
+<body data-t-sayfa="pano.baslik">
+
+<a class="atla" href="#icerik" data-t="menu.atla"></a>
 
 <header class="ust">
   <div class="kapsayici ust-ic">
@@ -29,15 +31,16 @@
   </div>
 </header>
 
-<main class="giris-sayfa">
-  <form id="giris-form" class="giris-kart">
-    <h1 data-t="giris.baslik"></h1>
-    <p class="giris-aciklama" data-t="giris.aciklama"></p>
-    <label class="alan"><span data-t="giris.kullanici"></span><input name="kullanici" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required maxlength="100"></label>
-    <label class="alan"><span data-t="giris.parola"></span><input name="parola" type="password" autocomplete="current-password" required></label>
-    <p class="hata" id="giris-hata" role="alert"></p>
-    <button class="dugme dugme-birincil" type="submit" data-t="giris.gonder"></button>
-  </form>
+<main id="icerik">
+  <section class="kapsayici sayfa-bas">
+    <span class="ustbaslik" id="pano-ust"></span>
+    <h1 id="pano-merhaba"></h1>
+    <p data-t="pano.giris"></p>
+  </section>
+  <div class="kapsayici">
+    <section id="pano-genel" class="pano-kutu pano-genel" hidden></section>
+    <div id="pano-izgara" class="pano-izgara"></div>
+  </div>
 </main>
 
 <footer class="alt">

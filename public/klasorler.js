@@ -1,4 +1,6 @@
-import { durum, t, baslat, iste, ortakKisa, yerAdi, tarihAraligi, tamTarih } from './ortak.js';
+import {
+  durum, t, baslat, iste, ortakKisa, yerAdi, tarihAraligi, tamTarih, onayla, bildir,
+} from './ortak.js';
 
 /**
  * Proje klasörleri — "Proje Yönetim Panosu · Klasör Yapısı" belgesinin
@@ -27,6 +29,9 @@ const dugme = (metin, sinif = 'metin-bag') => {
 let veri = { klasorler: [], dosyalar: [], sinir: { bayt: 0, uzantilar: [] } };
 let dizin = new Map();
 let secili = '';
+/* İçerik panosu ya seçili klasörü ya da üstteki araçlardan birinin
+   listesini gösterir: 'ara' | 'son' | 'kurum' | null (klasör). */
+let gorunum = null;
 const acik = new Set();
 
 /* --- Ad ve sayılar ------------------------------------------------------ */
@@ -113,6 +118,7 @@ function agaciCiz() {
 function sec_(id, { kaydir = true } = {}) {
   if (!dizin.has(id)) id = '';
   secili = id;
+  gorunumSec(null);
   /* Seçilen klasörün yolu açılır ki ağaçta nerede olduğu görünsün. */
   for (let k = dizin.get(id); k; k = dizin.get(k.ust)) acik.add(k.id);
   if (id && decodeURIComponent(location.hash.slice(1)) !== id) history.replaceState(null, '', '#' + id);
@@ -167,9 +173,8 @@ async function yenile() {
   icerigiCiz();
 }
 
-async function yukle(dosyalar, hedef, { surumDosyasi = null } = {}) {
+async function yukle(dosyalar, hedef, { surumDosyasi = null, aciklama = $('klasor-aciklama')?.value || '' } = {}) {
   const mb = Math.round(veri.sinir.bayt / 1048576);
-  const aciklama = $('klasor-aciklama')?.value || '';
   const durumSatiri = $('klasor-yukleme');
   let n = 0;
   hataGoster('');
@@ -191,10 +196,7 @@ async function yukle(dosyalar, hedef, { surumDosyasi = null } = {}) {
     n++;
   }
   await yenile();
-  if (n) {
-    const s = $('klasor-yukleme');
-    if (s) s.textContent = t('klasor.yuklendi', { n });
-  }
+  if (n) bildir(t('klasor.yuklendi', { n }));
 }
 
 function dosyaSatiri(d, k) {
@@ -294,7 +296,7 @@ function dosyaSatiri(d, k) {
   if (d.duzenleyebilir && !kisayolMu) {
     const sil = dugme(t('genel.sil'), 'metin-bag klasor-sil');
     sil.addEventListener('click', async () => {
-      if (!confirm(t('klasor.silOnay', { ad: d.ad }))) return;
+      if (!(await onayla(t('klasor.silOnay', { ad: d.ad }), { evet: t('genel.sil'), tehlike: true }))) return;
       try {
         await iste(`api/klasorler/dosya/${d.id}`, { method: 'DELETE' });
         await yenile();
@@ -307,9 +309,110 @@ function dosyaSatiri(d, k) {
   return li;
 }
 
+/* --- Üst araçlar: arama, kurumumun klasörleri, son eklenenler ------------------ */
+function gorunumSec(yeni) {
+  gorunum = yeni;
+  $('kurumum-dugme').setAttribute('aria-pressed', String(yeni === 'kurum'));
+  $('son-dugme').setAttribute('aria-pressed', String(yeni === 'son'));
+}
+
+/** Dosya listesi: her satırın üstünde durduğu klasöre giden bağlantı. */
+function dosyaListesi(dosyalar) {
+  const ul = el('ul', 'klasor-dosyalar');
+  for (const d of dosyalar) {
+    const k = dizin.get(d.klasor);
+    const li = dosyaSatiri(d, k);
+    const yer = dugme(`📁 ${tamAd(k)}`, 'metin-bag klasor-dosya-yer');
+    yer.addEventListener('click', () => sec_(k.id, { kaydir: false }));
+    li.prepend(yer);
+    ul.append(li);
+  }
+  return ul;
+}
+
+/** Kurumun sorumlu olduğu klasörler: sahip listesinde kurum var ya da
+ *  klasör kurumun kendi klasörü. "Herkes yükler" klasörleri sayılmaz —
+ *  onlar her kurumun listesini aynı gürültüyle doldururdu. */
+const kurumumunMu = k => !k.sahip.includes('*') && (k.sahip.includes(durum.kullanici.partner) || k.kurum === durum.kullanici.partner);
+
+function aracGorunumunuCiz(kap) {
+  const bas = el('div', 'klasor-bas');
+  const arama = $('klasor-ara').value.trim().toLocaleLowerCase(durum.dil);
+
+  if (gorunum === 'ara') {
+    const bulunan = veri.dosyalar
+      .filter(d => d.ad.toLocaleLowerCase(durum.dil).includes(arama) || (d.aciklama || '').toLocaleLowerCase(durum.dil).includes(arama))
+      .sort((a, b) => b.updated.localeCompare(a.updated));
+    bas.append(el('h2', '', t('klasor.araSonuc', { n: bulunan.length, arama: $('klasor-ara').value.trim() })));
+    kap.append(bas);
+    kap.append(bulunan.length ? dosyaListesi(bulunan.slice(0, 50)) : el('p', 'klasor-bos-not', t('klasor.araYok')));
+    return;
+  }
+
+  if (gorunum === 'son') {
+    const son = [...veri.dosyalar].sort((a, b) => b.surum.created.localeCompare(a.surum.created)).slice(0, 20);
+    bas.append(el('h2', '', t('klasor.son')), el('p', 'klasor-meta', t('klasor.son.not')));
+    kap.append(bas);
+    kap.append(son.length ? dosyaListesi(son) : el('p', 'klasor-bos-not', t('klasor.son.yok')));
+    return;
+  }
+
+  /* Kurumumun klasörleri: en üst düzeyde kalanlar (alt klasörü de kurumunsa
+     tekrar listelenmez), dosya sayısıyla kart olarak. */
+  const benim = veri.klasorler.filter(kurumumunMu);
+  const kokler = benim.filter(k => !benim.some(u => u.id === k.ust));
+  bas.append(el('h2', '', t('klasor.kurumum.baslik', { kurum: ortakKisa(durum.kullanici.partner) })),
+    el('p', 'klasor-meta', t('klasor.kurumum.not', { n: benim.length })));
+  kap.append(bas);
+  if (!kokler.length) { kap.append(el('p', 'klasor-bos-not', t('klasor.kurumum.yok'))); return; }
+  const izgara = el('div', 'klasor-kartlar');
+  for (const a of kokler) {
+    const kart = dugme('', 'klasor-kart');
+    const n = sayi(a.id);
+    kart.dataset.bos = String(n === 0);
+    if (numara(a)) kart.append(el('span', 'klasor-no', numara(a)));
+    kart.append(el('span', 'klasor-kart-ad', ad(a)));
+    kart.append(el('span', 'klasor-kart-adet', t('klasor.dosyaSayisi', { n })));
+    kart.addEventListener('click', () => sec_(a.id, { kaydir: false }));
+    izgara.append(kart);
+  }
+  kap.append(izgara);
+}
+
+/* --- Dosya yükle kutusu -------------------------------------------------------------
+   Üstteki düğmeden: dosya tek bir klasörde durduğu için önce "nereye?"
+   sorulur. Seçili klasöre yüklenebiliyorsa o önceden seçili gelir. */
+function yukleKutusunuKur() {
+  const kutu = $('yukle-kutu');
+  const form = $('yukle-form');
+  for (const k of kutu.querySelectorAll('[data-kapat]')) k.addEventListener('click', () => kutu.close());
+  $('yukle-dugme').addEventListener('click', () => {
+    form.reset();
+    const secim = klasorSecimi();
+    secim.name = 'klasor';
+    secim.required = true;
+    if (dizin.get(secili)?.yukleyebilir) secim.value = secili;
+    $('yukle-klasor-yer').replaceChildren(secim);
+    form.dosya.accept = veri.sinir.uzantilar.map(u => '.' + u).join(',');
+    $('yukle-sinir').textContent = t('klasor.yukle.ipucu', { mb: Math.round(veri.sinir.bayt / 1048576) });
+    kutu.showModal();
+  });
+  form.addEventListener('submit', async olay => {
+    olay.preventDefault();
+    const hedef = form.klasor.value;
+    const dosyalar = [...form.dosya.files];
+    const aciklama = form.aciklama.value;
+    kutu.close();
+    /* Klasöre geçilir ki yükleme durumu ve olası hata orada görünsün. */
+    sec_(hedef, { kaydir: false });
+    await yukle(dosyalar, hedef, { aciklama });
+  });
+}
+
 function icerigiCiz() {
   const kap = $('klasor-icerik');
   kap.replaceChildren();
+  if (gorunum) { aracGorunumunuCiz(kap); return; }
   const k = dizin.get(secili);
   if (!k) {
     kap.append(el('p', 'bos-durum', t('klasor.sec')));
@@ -394,7 +497,7 @@ function icerigiCiz() {
     girdi.multiple = true;
     girdi.id = 'klasor-dosya';
     girdi.accept = veri.sinir.uzantilar.map(u => '.' + u).join(',');
-    const etiket = el('label', 'dugme dugme-birincil', t('klasor.yukle'));
+    const etiket = el('label', 'dugme dugme-ikincil', t('klasor.yukle'));
     etiket.htmlFor = 'klasor-dosya';
     girdi.className = 'klasor-gizli';
     girdi.addEventListener('change', () => girdi.files.length && yukle([...girdi.files], k.id));
@@ -491,7 +594,21 @@ if (!durum.kullanici) {
   $('klasor-butce').replaceChildren(butceTablosu());
   $('klasor-takvim-bolum').hidden = false;
   $('klasor-butce-bolum').hidden = false;
-  $('klasor-ara').addEventListener('input', agaciCiz);
+  $('klasor-arac').hidden = false;
+  /* Arama hem ağacı süzer hem de bulunan dosyaları içerik panosunda listeler;
+     kutu boşalınca seçili klasöre dönülür. */
+  $('klasor-ara').addEventListener('input', () => {
+    gorunumSec($('klasor-ara').value.trim() ? 'ara' : null);
+    agaciCiz();
+    icerigiCiz();
+  });
+  for (const [dugmeId, ad_] of [['kurumum-dugme', 'kurum'], ['son-dugme', 'son']]) {
+    $(dugmeId).addEventListener('click', () => {
+      gorunumSec(gorunum === ad_ ? null : ad_);
+      icerigiCiz();
+    });
+  }
+  yukleKutusunuKur();
   $('klasor-bos').addEventListener('change', agaciCiz);
   const ilk = decodeURIComponent(location.hash.slice(1));
   sec_(dizin.has(ilk) ? ilk : '01', { kaydir: false });

@@ -48,7 +48,8 @@ test('iki lehçe aynı tabloları ve sütunları tanımlar', () => {
   /* Bugünkü tablolar; Faz 1-3 bu listeyi büyütecek. */
   assert.deepEqual(Object.keys(sqlite.tablolar).sort(),
     ['event_photos', 'events', 'form_dosya', 'form_gorsel', 'form_hatirlatma', 'form_taslak',
-     'form_yanitlar', 'forms', 'klasor_dosya', 'klasor_kisayol', 'klasor_surum', 'sessions', 'tasks', 'team', 'user_photos', 'users']);
+     'form_yanitlar', 'forms', 'klasor_dosya', 'klasor_kisayol', 'klasor_surum', 'sessions', 'tasks', 'team', 'user_photos', 'users',
+     'outputs', 'output_files', 'event_files'].sort());
 });
 
 test('lehçe farkı yalnızca üç sözcüktedir', () => {

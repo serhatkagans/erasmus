@@ -1,6 +1,5 @@
 import {
-  durum, t, baslat, iste, ceviriyiUygula, ortakAdi, ortakKisa, yerAdi,
-  etkinlikBaslik, etkinlikOzet, tarihAraligi, tamTarih, ayYil, bugun, gunFarki,
+  durum, t, baslat, iste, ceviriyiUygula, ortakAdi, ortakKisa, yerAdi, etkinlikBaslik, etkinlikOzet, tarihAraligi, tamTarih, ayYil, bugun, gunFarki, onayla, bildir,
 } from './ortak.js';
 
 /**
@@ -207,6 +206,12 @@ function listeCiz(liste) {
       etiketYap(t(`tur.${e.tur}`)),
       etiketYap(`${yerAdi(e.yer)} · ${ortakKisa(e.lider)}`),
     );
+    /* Faaliyet dosyası yalnızca başlamış faaliyette gösterilir: gelecektekinde
+       "0/6" bir eksik değil, henüz zamanı gelmemiş iştir. */
+    if (e.dosya && e.baslangic <= bugun()) {
+      const tamam = e.dosya.tamam === e.dosya.toplam;
+      etiketler.append(el('span', `fd-rozet${tamam ? ' fd-rozet-tamam' : ''}`, t('faaliyet.rozet', { n: e.dosya.tamam, toplam: e.dosya.toplam })));
+    }
     orta.append(etiketler);
 
     const sag = etiketYap(t(`durum.${e.durum}`), 'etiket-durum', { durum: e.durum });
@@ -285,11 +290,12 @@ function galeriCiz(kutu, foto, silinebilir, sonra) {
       sil.title = t('foto.sil');
       sil.setAttribute('aria-label', `${t('foto.sil')}: ${f.ad}`);
       sil.addEventListener('click', async () => {
+        if (!(await onayla(t('foto.silOnay', { ad: f.ad }), { evet: t('genel.sil'), tehlike: true }))) return;
         try {
           await iste(`api/foto/${f.id}`, { method: 'DELETE' });
           await sonra();
         } catch (err) {
-          alert(err.message);
+          bildir(err.message, 'hata');
         }
       });
       hucre.append(sil);
@@ -313,6 +319,137 @@ async function fotolariYukle(etkinlikId, dosyalar) {
 
 /* --- Ayrıntı kutusu ------------------------------------------------------ */
 let acikEtkinlik = null;
+
+/* --- Faaliyet dosyası ------------------------------------------------------
+   Pencerede bir şerit: "Faaliyet dosyası 4/6" ve her parçanın satırı.
+   Eksik parça tıklanınca kendi satırına gidilir; dosya yüklemek ile
+   faaliyeti tamamlamak arasındaki bağ böylece görünür. Fotoğraf ve anket
+   türetilir: fotoğraf etkinliğin galerisinden, anket Formlar'dan. */
+const boyutYaz = b => new Intl.NumberFormat(durum.dil, { style: 'unit', unit: b >= 1048576 ? 'megabyte' : 'kilobyte', maximumFractionDigits: 1 })
+  .format(b >= 1048576 ? b / 1048576 : Math.max(b / 1024, 0.1));
+
+async function dosyaSeridiCiz(e) {
+  const kutu = $('detay-dosya');
+  if (!e.dosya) { kutu.hidden = true; kutu.replaceChildren(); return; }
+  let veri;
+  try { veri = await iste(`api/etkinlikler/${e.id}/dosya`); }
+  catch (err) { kutu.hidden = true; bildir(err.message, 'hata'); return; }
+  if (acikEtkinlik?.id !== e.id) return;
+
+  const tamam = veri.parcalar.filter(p => p.tamam).length;
+  const bas = el('div', 'fd-bas');
+  bas.append(el('h3', null, t('faaliyet.baslik')),
+    el('span', `fd-sayac${tamam === veri.parcalar.length ? ' fd-sayac-tamam' : ''}`, t('faaliyet.sayac', { n: tamam, toplam: veri.parcalar.length })));
+
+  /* Parça çipleri: eksikler tıklanabilir, kendi satırına götürür. */
+  const cipler = el('div', 'fd-cipler');
+  const liste = el('ul', 'fd-liste');
+  for (const p of veri.parcalar) {
+    const satirId = `fd-${e.id}-${p.tur}`;
+    const cip = el('a', `fd-cip${p.tamam ? ' fd-cip-tamam' : ''}`, `${p.tamam ? '✓' : '○'} ${t(`faaliyet.parca.${p.tur}`)}`);
+    cip.href = '#' + satirId;
+    cip.addEventListener('click', o => { o.preventDefault(); document.getElementById(satirId)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); document.getElementById(satirId)?.focus(); });
+    cipler.append(cip);
+
+    const li = el('li', `fd-satir${p.tamam ? ' fd-satir-tamam' : ''}`);
+    li.id = satirId;
+    li.tabIndex = -1;
+    const ust = el('div', 'fd-satir-ust');
+    ust.append(el('strong', null, t(`faaliyet.parca.${p.tur}`)), el('span', 'fd-durum', t(p.tamam ? 'faaliyet.tamam' : 'faaliyet.eksik')));
+    li.append(ust);
+
+    if (p.tur === 'foto') {
+      li.append(el('p', 'fd-not', p.sayi ? t('faaliyet.foto.var', { n: p.sayi }) : t('faaliyet.foto.yok')));
+      if (veri.yetkili) {
+        const ekle = el('button', 'metin-bag', t('faaliyet.foto.ekle'));
+        ekle.type = 'button';
+        ekle.addEventListener('click', () => { $('detay-kutu').close(); formAc(e); });
+        li.append(ekle);
+      }
+    } else if (p.tur === 'anket') {
+      if (p.form) {
+        const bag = el('a', 'metin-bag', p.form.baslik);
+        bag.href = `formlar.html#form-${p.form.id}`;
+        li.append(bag);
+      } else {
+        li.append(el('p', 'fd-not', t('faaliyet.anket.yok')));
+      }
+      if (veri.yetkili) {
+        const secim = el('select', 'fd-anket-sec');
+        secim.setAttribute('aria-label', t('faaliyet.anket.sec'));
+        secim.append(new Option(t('faaliyet.anket.bagYok'), ''));
+        for (const f of veri.secenekler) secim.append(new Option(f.baslik, f.id));
+        secim.value = p.form ? String(p.form.id) : '';
+        secim.addEventListener('change', async () => {
+          try {
+            await iste(`api/etkinlikler/${e.id}/anket`, { method: 'PUT', body: JSON.stringify({ formId: secim.value ? Number(secim.value) : null }) });
+            bildir(t('genel.kaydedildi'));
+            await dosyaDegisti(e);
+          } catch (err) { bildir(err.message, 'hata'); }
+        });
+        li.append(secim);
+        if (!veri.secenekler.length) li.append(el('p', 'fd-not', t('faaliyet.anket.secenekYok')));
+      }
+    } else {
+      const dosyalar = el('ul', 'fd-dosyalar');
+      for (const d of p.dosyalar) {
+        const di = el('li');
+        const bag = el('a', 'metin-bag', d.ad);
+        bag.href = `api/faaliyet-dosya/${d.id}`;
+        bag.setAttribute('download', '');
+        di.append(bag, el('span', 'fd-meta', ` · ${boyutYaz(d.boyut)} · ${tamTarih(d.created.slice(0, 10))}${d.yukleyen ? ' · ' + d.yukleyen : ''}`));
+        if (veri.yetkili) {
+          const sil = el('button', 'fd-sil', '×');
+          sil.type = 'button';
+          sil.setAttribute('aria-label', `${t('genel.sil')}: ${d.ad}`);
+          sil.addEventListener('click', async () => {
+            if (!(await onayla(t('klasor.silOnay', { ad: d.ad }), { evet: t('genel.sil'), tehlike: true }))) return;
+            try { await iste(`api/faaliyet-dosya/${d.id}`, { method: 'DELETE' }); bildir(t('genel.silindi')); await dosyaDegisti(e); }
+            catch (err) { bildir(err.message, 'hata'); }
+          });
+          di.append(sil);
+        }
+        dosyalar.append(di);
+      }
+      if (p.dosyalar.length) li.append(dosyalar);
+      if (veri.yetkili) {
+        const etiket = el('label', 'dugme dugme-ikincil dugme-kucuk fd-yukle', t('faaliyet.yukle'));
+        const girdi = el('input', 'gorsel-gizli');
+        girdi.type = 'file';
+        girdi.multiple = true;
+        etiket.append(girdi);
+        girdi.addEventListener('change', async () => {
+          const secilen = [...girdi.files];
+          girdi.value = '';
+          let n = 0;
+          for (const f of secilen) {
+            const yanit = await fetch(`api/etkinlikler/${e.id}/dosya?tur=${p.tur}`, {
+              method: 'POST', body: f, headers: { 'X-File-Name': encodeURIComponent(f.name) },
+            });
+            if (yanit.ok) { n++; continue; }
+            const g = await yanit.json().catch(() => ({}));
+            bildir(`${f.name}: ${durum.sozluk[g.error] || g.error || t('genel.hata')}`, 'hata');
+          }
+          if (n) bildir(t('klasor.yuklendi', { n }));
+          await dosyaDegisti(e);
+        });
+        li.append(etiket);
+      }
+    }
+    liste.append(li);
+  }
+
+  kutu.replaceChildren(bas, cipler, liste);
+  kutu.hidden = false;
+}
+
+/** Dosya değişince hem şerit hem liste/ana sayfa özetleri tazelenir. */
+async function dosyaDegisti(e) {
+  await etkinlikleriYenile();
+  const guncel = etkinlikler.find(x => x.id === e.id) || e;
+  acikEtkinlik = guncel;
+  await dosyaSeridiCiz(guncel);
+}
 
 function detayAc(e) {
   acikEtkinlik = e;
@@ -357,8 +494,13 @@ function detayAc(e) {
   $('detay-duzenle').hidden = !yetkili;
   /* Resmî program taahhüttür: silinemez, yalnızca "Ertelendi" yapılabilir. */
   $('detay-sil').hidden = !yetkili || e.resmi;
+  /* Silme düğmesi yoksa nedeni söylenir: yanlış girilmiş resmî kaydın
+     çaresi düzenlemek ya da "Ertelendi" yapmaktır. */
+  $('detay-resmi-not').hidden = !yetkili || !e.resmi;
+  $('detay-resmi-not').textContent = t(durum.kullanici?.koordinator ? 'etkinlik.resmi.silinmez' : 'etkinlik.resmi.silinmezOrtak');
 
   $('detay-kutu').showModal();
+  dosyaSeridiCiz(e);
 }
 
 /* --- Form ---------------------------------------------------------------- */
@@ -472,6 +614,7 @@ async function formGonder(olay) {
     }
     $('form-kutu').close();
     await etkinlikleriYenile();
+    bildir(t('genel.kaydedildi'));
   } catch (err) {
     hata.textContent = err.message;
   } finally {
@@ -783,13 +926,13 @@ function kutulariKur() {
   });
 
   $('detay-sil').addEventListener('click', async () => {
-    if (!confirm(t('form.sil.onay'))) return;
+    if (!(await onayla(t('form.sil.onay'), { evet: t('genel.sil'), tehlike: true }))) return;
     try {
       await iste(`api/etkinlikler/${acikEtkinlik.id}`, { method: 'DELETE' });
       $('detay-kutu').close();
       await etkinlikleriYenile();
     } catch (err) {
-      alert(err.message);
+      bildir(err.message, 'hata');
     }
   });
 

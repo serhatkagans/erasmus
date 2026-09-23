@@ -154,6 +154,7 @@ function hatirlaticiMetni(h) {
      hatırlatıcı da doğru dilde okunsun. */
   const degerler = { ...h.degerler };
   if (degerler.slug) degerler.baslik = durum.sozluk[`etkinlik.${degerler.slug}.baslik`] || degerler.baslik;
+  if (degerler.anahtar) degerler.baslik = t(`${degerler.anahtar}.baslik`);
   return t(h.anahtar, degerler);
 }
 
@@ -233,14 +234,17 @@ async function hatirlaticilariKur() {
 
   kutu.append(dugme, panel);
 }
-
 /* --- Menü -----------------------------------------------------------------
    Tek liste, her sayfada aynı sıra ve aynı öğeler. Eskiden her HTML kendi
    menüsünü yazıyordu; ana sayfada iki bağlantı fazlaydı ve sayfa değişince
-   menü kayıyordu. `sayfa`: aria-current için karşılaştırılan dosya adı. */
+   menü kayıyordu. `sayfa`: aria-current için karşılaştırılan dosya adı.
+   Kişiye ait bağlantılar (profil, parola, çıkış) burada değil, hesap
+   menüsündedir. */
 const MENU = [
+  { anahtar: 'menu.pano', href: 'pano.html' },
   { anahtar: 'menu.anasayfa', href: './', sayfa: 'index.html' },
   { anahtar: 'menu.takvim', href: 'takvim.html' },
+  { anahtar: 'menu.ciktilar', href: 'ciktilar.html' },
   { anahtar: 'menu.ekip', href: 'ekip.html' },
   { anahtar: 'menu.formlar', href: 'formlar.html' },
   { anahtar: 'menu.belgeler', href: 'belge.html' },
@@ -250,40 +254,144 @@ const MENU = [
 
 function menuyuKur() {
   const nav = document.getElementById('gezinme');
+  const ac = document.getElementById('menu-dugme');
   if (!nav) return;
+  /* Oturumsuz kişi yalnızca giriş ve profil kartını görebilir; menüdeki
+     her bağlantı onu girişe geri yollardı. */
+  if (!durum.kullanici) { nav.hidden = true; return; }
   const burasi = location.pathname.split('/').pop() || 'index.html';
   /* Yönetici öğeleri yalnızca koordinatöre görünür; sunucu da ayrıca denetler. */
-  const ogeler = MENU.filter(o => !o.koordinator || durum.kullanici?.koordinator);
-  /* Giriş yapan kişi kendi kartına buradan ulaşır; kart herkese açıktır
-     ama adresini bilmek için kullanıcı adını bilmek gerekir. */
-  if (durum.kullanici?.kullanici) {
-    ogeler.push({ anahtar: 'menu.profil', href: `profil.html?u=${encodeURIComponent(durum.kullanici.kullanici)}`, sayfa: 'profil.html',
-      kendisi: new URLSearchParams(location.search).get('u')?.toLowerCase() === durum.kullanici.kullanici });
-  }
+  const ogeler = MENU.filter(o => !o.koordinator || durum.kullanici.koordinator);
   nav.replaceChildren(...ogeler.map(o => {
     const a = document.createElement('a');
     a.href = o.href;
     a.textContent = t(o.anahtar);
-    const sayfa = o.sayfa || o.href;
-    if (sayfa === burasi && (o.kendisi ?? true)) a.setAttribute('aria-current', 'page');
+    if ((o.sayfa || o.href) === burasi) a.setAttribute('aria-current', 'page');
     return a;
   }));
+
+  /* Telefon: menü bir düğmenin arkasında açılır-kapanır. Genişlik CSS'te
+     belirlenir; düğme dar ekranda görünür, geniş ekranda gizlidir. */
+  if (!ac) return;
+  ac.hidden = false;
+  const ust = ac.closest('.ust');
+  const kapat = () => { ust.classList.remove('menu-acik'); ac.setAttribute('aria-expanded', 'false'); };
+  ac.addEventListener('click', () => {
+    const acik = ust.classList.toggle('menu-acik');
+    ac.setAttribute('aria-expanded', String(acik));
+  });
+  document.addEventListener('keydown', o => { if (o.key === 'Escape' && ust.classList.contains('menu-acik')) { kapat(); ac.focus(); } });
+}
+
+/* --- Ortak onay kutusu ------------------------------------------------------
+   Tarayıcının confirm() kutusunun yerine: sitenin görünümünde, çevrilmiş
+   düğmelerle ve silme gibi geri alınamaz işlemlerde kırmızı onay düğmesiyle.
+   Söz (Promise) döner: `if (!(await onayla(metin))) return;` */
+let onayKutusu = null;
+export function onayla(metin, { baslik = '', evet = t('genel.tamam'), tehlike = false } = {}) {
+  if (!onayKutusu) {
+    onayKutusu = document.createElement('dialog');
+    onayKutusu.className = 'onay-kutusu';
+    onayKutusu.innerHTML = `
+      <form method="dialog" class="kutu-ic">
+        <h2 class="onay-baslik"></h2>
+        <p class="onay-metin"></p>
+        <div class="kutu-eylem">
+          <button value="evet" class="dugme onay-evet"></button>
+          <button value="hayir" class="dugme dugme-ikincil onay-hayir"></button>
+        </div>
+      </form>`;
+    document.body.append(onayKutusu);
+  }
+  const k = onayKutusu;
+  k.querySelector('.onay-baslik').textContent = baslik;
+  k.querySelector('.onay-baslik').hidden = !baslik;
+  k.querySelector('.onay-metin').textContent = metin;
+  const evetDugme = k.querySelector('.onay-evet');
+  evetDugme.textContent = evet;
+  evetDugme.className = `dugme onay-evet ${tehlike ? 'dugme-tehlike-dolu' : 'dugme-birincil'}`;
+  k.querySelector('.onay-hayir').textContent = t('genel.vazgec');
+  k.returnValue = 'hayir';
+  return new Promise(coz => {
+    k.addEventListener('close', () => coz(k.returnValue === 'evet'), { once: true });
+    k.showModal();
+    /* Tehlikeli işlemde odak "Vazgeç"te başlar: Enter'a yanlışlıkla basmak silmesin. */
+    k.querySelector(tehlike ? '.onay-hayir' : '.onay-evet').focus();
+  });
+}
+
+/* --- Kısa bildirim ---------------------------------------------------------
+   "Kaydedildi" gibi geri bildirimler ve alert() ile gösterilen hatalar
+   için. Ekranın altında belirir, kendiliğinden kaybolur; hata daha uzun
+   kalır ve ekran okuyucuya hemen okunur (role=alert). */
+export function bildir(metin, tur = 'basari') {
+  let yigin = document.getElementById('bildirimler');
+  if (!yigin) {
+    yigin = document.createElement('div');
+    yigin.id = 'bildirimler';
+    yigin.className = 'bildirimler';
+    document.body.append(yigin);
+  }
+  const not = document.createElement('div');
+  not.className = `bildirim bildirim-${tur}`;
+  not.setAttribute('role', tur === 'hata' ? 'alert' : 'status');
+  const yazi = document.createElement('span');
+  yazi.textContent = metin;
+  const kapat = document.createElement('button');
+  kapat.type = 'button';
+  kapat.className = 'bildirim-kapat';
+  kapat.textContent = '×';
+  kapat.setAttribute('aria-label', t('genel.kapat'));
+  const kaldir = () => not.remove();
+  kapat.addEventListener('click', kaldir);
+  not.append(yazi, kapat);
+  yigin.append(not);
+  setTimeout(kaldir, tur === 'hata' ? 8000 : 3500);
+}
+
+/* --- Kaydedilmemiş değişiklik koruması ---------------------------------------
+   `data-koru` işaretli düzenleme kutularında bir alan değiştiyse, kutuyu
+   Vazgeç, × ya da Esc ile kapatmadan önce sorulur. Kaydedince sayfa kutuyu
+   close() ile kapatır; o yol sorulmaz. Formlar düzenleyicisinin kendi
+   (sayfa düzeyinde) koruması vardır, bu onun kutulardaki karşılığıdır. */
+function kutuyuKoru(kutu) {
+  let kirli = false;
+  const ac = kutu.showModal.bind(kutu);
+  kutu.showModal = () => { kirli = false; ac(); };
+  kutu.addEventListener('input', () => { kirli = true; });
+  kutu.addEventListener('change', () => { kirli = true; });
+  kutu.addEventListener('close', () => { kirli = false; });
+  const sor = async () => {
+    if (await onayla(t('genel.kaydedilmemis'), { evet: t('genel.vazgecKapat'), tehlike: true })) {
+      kirli = false;
+      kutu.close();
+    }
+  };
+  kutu.addEventListener('cancel', olay => { if (kirli) { olay.preventDefault(); sor(); } });
+  /* Yakalama evresinde: sayfanın kapat düğmesine bağladığı dinleyiciden önce çalışır. */
+  kutu.addEventListener('click', olay => {
+    if (kirli && olay.target.closest('[data-kapat]')) {
+      olay.preventDefault();
+      olay.stopImmediatePropagation();
+      sor();
+    }
+  }, true);
 }
 
 /* --- Parola değiştirme ------------------------------------------------------
-   Kutu burada kurulur ki düğme her sayfada çalışsın; eskiden yalnızca
-   takvimde işleyicisi vardı, öteki sayfalarda düğme bir şey yapmıyordu. */
+   Kutu burada kurulur ki her sayfada hesap menüsünden açılabilsin. */
+let parolaAc = () => {};
 function parolaKutusunuKur() {
-  const dugme = document.getElementById('parola-dugme');
-  if (!dugme || !durum.kullanici) return;
+  if (!durum.kullanici) return;
 
   const kutu = document.createElement('dialog');
   kutu.id = 'parola-kutu';
+  kutu.dataset.koru = '';
   kutu.innerHTML = `
     <form class="kutu-ic">
       <div class="kutu-ust">
         <h2 data-t="parola.baslik"></h2>
-        <button type="button" class="kapat" data-parola-kapat data-t-etiket="genel.kapat">×</button>
+        <button type="button" class="kapat" data-kapat data-t-etiket="genel.kapat">×</button>
       </div>
       <p class="kutu-aciklama" data-t="parola.ipucu"></p>
       <label class="alan"><span data-t="parola.mevcut"></span><input name="mevcut" type="password" autocomplete="current-password" required></label>
@@ -291,22 +399,23 @@ function parolaKutusunuKur() {
       <p class="hata" role="alert"></p>
       <div class="kutu-eylem">
         <button type="submit" class="dugme dugme-birincil" data-t="parola.guncelle"></button>
-        <button type="button" class="dugme dugme-ikincil" data-parola-kapat data-t="genel.vazgec"></button>
+        <button type="button" class="dugme dugme-ikincil" data-kapat data-t="genel.vazgec"></button>
       </div>
     </form>`;
   document.body.append(kutu);
   ceviriyiUygula(kutu);
+  kutuyuKoru(kutu);
 
   const form = kutu.querySelector('form');
   const hata = kutu.querySelector('.hata');
   form.yeni.minLength = durum.minParola;
-  for (const kapat of kutu.querySelectorAll('[data-parola-kapat]')) kapat.addEventListener('click', () => kutu.close());
+  for (const kapat of kutu.querySelectorAll('[data-kapat]')) kapat.addEventListener('click', () => kutu.close());
 
-  dugme.addEventListener('click', () => {
+  parolaAc = () => {
     form.reset();
     hata.textContent = '';
     kutu.showModal();
-  });
+  };
 
   form.addEventListener('submit', async olay => {
     olay.preventDefault();
@@ -317,32 +426,81 @@ function parolaKutusunuKur() {
         body: JSON.stringify({ mevcut: form.mevcut.value, yeni: form.yeni.value }),
       });
       kutu.close();
-      alert(t('parola.tamam'));
+      bildir(t('parola.tamam'));
     } catch (err) {
       hata.textContent = err.message;
     }
   });
 }
 
+/* --- Hesap menüsü -------------------------------------------------------------
+   Ad rozeti bir düğmedir; altında kişiye ait her şey: profil kartı, parola,
+   çıkış. Üst bantta üç ayrı düğme yerine tek giriş noktası. */
 function oturumuKur() {
   const giris = document.getElementById('giris-baglanti');
-  const cikis = document.getElementById('cikis-dugme');
-  const kim = document.getElementById('kullanici-adi');
-  const parola = document.getElementById('parola-dugme');
-
+  const kutu = document.getElementById('hesap');
   const acik = !!durum.kullanici;
-  if (giris) giris.hidden = acik;
-  if (cikis) cikis.hidden = !acik;
-  if (parola) parola.hidden = !acik;
-  if (kim) {
-    kim.hidden = !acik;
-    if (acik) kim.textContent = `${durum.kullanici.ad || ''} · ${ortakKisa(durum.kullanici.partner)}`.replace(/^ · /, '');
-  }
+  /* Giriş sayfasında kendine bağlantı gereksiz. */
+  if (giris) giris.hidden = acik || location.pathname.endsWith('/giris.html');
+  if (!kutu || !acik) return;
 
-  cikis?.addEventListener('click', async () => {
+  const k = durum.kullanici;
+  const ad = k.ad || k.kullanici;
+  const bas = ad.trim().split(/\s+/).filter((_, i, d) => i === 0 || i === d.length - 1)
+    .map(s => s[0]).join('').toLocaleUpperCase(durum.dil);
+
+  const dugme = document.createElement('button');
+  dugme.type = 'button';
+  dugme.className = 'hesap-dugme';
+  dugme.setAttribute('aria-expanded', 'false');
+  dugme.setAttribute('aria-haspopup', 'true');
+  dugme.setAttribute('aria-label', t('hesap.ac', { ad }));
+  const avatar = document.createElement('span');
+  avatar.className = 'hesap-avatar';
+  avatar.textContent = bas;
+  const yazi = document.createElement('span');
+  yazi.className = 'hesap-ad';
+  yazi.textContent = `${ad} · ${ortakKisa(k.partner)}`;
+  dugme.append(avatar, yazi);
+
+  const panel = document.createElement('div');
+  panel.className = 'hesap-panel';
+  panel.hidden = true;
+  const kim = document.createElement('div');
+  kim.className = 'hesap-kim';
+  const kimAd = document.createElement('strong');
+  kimAd.textContent = ad;
+  const kimAlt = document.createElement('span');
+  kimAlt.textContent = `${k.kullanici} · ${ortakAdi(k.partner)}${k.koordinator ? ` · ${t('kullanicilar.yetki.tam')}` : ''}`;
+  kim.append(kimAd, kimAlt);
+
+  const profil = document.createElement('a');
+  profil.href = `profil.html?u=${encodeURIComponent(k.kullanici)}`;
+  profil.textContent = t('menu.profil');
+  const parola = document.createElement('button');
+  parola.type = 'button';
+  parola.textContent = t('menu.parola');
+  parola.addEventListener('click', () => { kapat(); parolaAc(); });
+  const cikis = document.createElement('button');
+  cikis.type = 'button';
+  cikis.textContent = t('menu.cikis');
+  cikis.addEventListener('click', async () => {
     await iste('api/cikis', { method: 'POST' });
-    location.reload();
+    location.href = 'giris.html';
   });
+  panel.append(kim, profil, parola, cikis);
+
+  const kapat = () => { panel.hidden = true; dugme.setAttribute('aria-expanded', 'false'); };
+  dugme.addEventListener('click', () => {
+    const acilsin = panel.hidden;
+    panel.hidden = !acilsin;
+    dugme.setAttribute('aria-expanded', String(acilsin));
+  });
+  document.addEventListener('click', o => { if (!panel.hidden && !kutu.contains(o.target)) kapat(); });
+  document.addEventListener('keydown', o => { if (o.key === 'Escape' && !panel.hidden) { kapat(); dugme.focus(); } });
+
+  kutu.replaceChildren(dugme, panel);
+  kutu.hidden = false;
 }
 
 /** Her sayfa bunu çağırır: açılış verisini çeker, çeviriyi uygular, kabuğu kurar. */
@@ -352,8 +510,9 @@ export async function baslat() {
   menuyuKur();
   ceviriyiUygula();
   dilDegistiriciyiKur();
-  oturumuKur();
   parolaKutusunuKur();
+  oturumuKur();
+  for (const kutu of document.querySelectorAll('dialog[data-koru]:not(#parola-kutu)')) kutuyuKoru(kutu);
   /* Hatırlatıcılar ayrı bir çağrı ister; sayfanın çizilmesini bekletmesin
      diye beklenmeden başlatılır. */
   hatirlaticilariKur();
