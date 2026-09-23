@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="E-YOUTHPRENEUR katılım ve teşekkür belgeleri: kayıtlı ekipler ve ortak kurumlar arasından seçilerek üretilir.">
+<title>Belgeler · E-YOUTHPRENEUR</title>
+<link rel="icon" href="logo.png">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="belge.css">
+<script src="belge.js" type="module"></script>
+</head>
+<body data-t-sayfa="belge.sayfa.baslik">
+
+<a class="atla" href="#icerik" data-t="menu.atla"></a>
+
+<header class="ust">
+  <div class="kapsayici ust-ic">
+    <a class="marka" href="./">
+      <img src="logo.png" alt="">
+      <span>E-YOUTHPRENEUR <small data-t="altbilgi.kunye"></small></span>
+    </a>
+    <!-- Menü ortak.js'te tek listeden kurulur (menuyuKur): her sayfada aynı. -->
+    <nav class="gezinme" id="gezinme" data-t-etiket="menu.ana"></nav>
+    <div class="ust-sag">
+      <span id="kullanici-adi" class="kullanici-rozet" hidden></span>
+      <span id="hatirlatici" class="hatirlatici" hidden></span>
+      <div id="dil-secici" class="dil-secici" hidden></div>
+      <button id="parola-dugme" class="dugme dugme-hayalet" hidden data-t="menu.parola"></button>
+      <a id="giris-baglanti" class="dugme dugme-hayalet" href="giris.html" data-t="menu.giris"></a>
+      <button id="cikis-dugme" class="dugme dugme-hayalet" hidden data-t="menu.cikis"></button>
+    </div>
+  </div>
+</header>
+
+<main id="icerik">
+  <section class="kapsayici sayfa-bas">
+    <span class="ustbaslik" data-t="belge.ustbaslik"></span>
+    <h1 data-t="belge.sayfa.baslik"></h1>
+    <p class="belge-giris" data-t="belge.giris"></p>
+  </section>
+
+  <div class="kapsayici">
+    <!-- Giriş yapılmadıysa form yerine bu kart görünür. -->
+    <section class="pano belge-kapali" id="giris-uyarisi" hidden>
+      <p data-t="belge.hata.giris"></p>
+      <a class="dugme dugme-birincil" href="giris.html" data-t="menu.giris"></a>
+    </section>
+
+    <!--
+      Panel ŞERİTLERDEN kurulur: `.pano` kendi başına dolgusuz bir kabuktur
+      (bkz. style.css), dolguyu her zaman içindeki şerit getirir. Form eskiden
+      alanları doğrudan panelin içine koyuyordu; bu yüzden ilk etiket sol
+      kenara yapışık duruyor, son alan sağ kenardan taşıyordu.
+      Üç şerit = üç soru: ne tür belge, kime, kimin imzasıyla.
+    -->
+    <form class="pano belge-form" id="belge-form" hidden>
+      <div class="pano-bas">
+        <h2 data-t="belge.form.baslik"></h2>
+        <div class="pano-bas-sag">
+          <span class="belge-rozet" id="belge-secim-sayisi"></span>
+        </div>
+      </div>
+
+      <section class="belge-bant">
+        <h3 class="belge-adim" data-t="belge.adim.ayar"></h3>
+        <div class="form-izgara belge-ikili">
+          <label class="alan"><span data-t="belge.tur.alan"></span><select name="tur" id="belge-tur"></select></label>
+          <label class="alan"><span data-t="belge.etkinlik.alan"></span><select name="etkinlik" id="belge-etkinlik"></select></label>
+        </div>
+      </section>
+
+      <fieldset class="belge-bant">
+        <legend class="belge-adim" data-t="belge.alicilar"></legend>
+        <p class="ipucu" data-t="belge.alicilar.ipucu"></p>
+        <!-- Her kişi kendi belgesini alır; bu düğme kurum ayrımı yapmadan
+             kayıtlı herkesi işaretler. -->
+        <div class="belge-toplu">
+          <button type="button" id="belge-herkes" class="dugme dugme-ikincil" data-t="belge.herkes"></button>
+          <span class="ipucu" id="belge-kisi-toplam"></span>
+        </div>
+        <div id="belge-alicilar" class="belge-alicilar"></div>
+        <label class="alan belge-serbest-alan"><span data-t="belge.serbest"></span>
+          <textarea name="ad" id="belge-serbest" rows="2" data-t-yer="belge.serbest.ipucu"></textarea>
+        </label>
+      </fieldset>
+
+      <section class="belge-bant">
+        <h3 class="belge-adim" data-t="belge.adim.imza"></h3>
+        <div class="form-izgara belge-ikili">
+          <label class="alan"><span data-t="belge.imza.ad"></span><input name="imzaAd" maxlength="120" required></label>
+          <label class="alan"><span data-t="belge.imza.unvan"></span><input name="imzaUnvan" id="belge-imza-unvan" maxlength="120"></label>
+        </div>
+        <label class="alan"><span data-t="belge.metin"></span>
+          <textarea name="metin" id="belge-metin" rows="3" maxlength="1200" data-t-yer="belge.metin.ipucu"></textarea>
+        </label>
+      </section>
+
+      <div class="belge-eylem">
+        <button type="submit" class="dugme dugme-birincil" data-t="belge.hazirla"></button>
+        <button type="button" id="belge-temizle" class="metin-bag" data-t="belge.temizle"></button>
+        <p class="hata" id="belge-hata" role="alert"></p>
+      </div>
+    </form>
+  </div>
+
+  <!-- Önizleme ve yazdırma. Yazdırmada sayfadaki her şey gizlenir, yalnızca
+       bu liste basılır (bkz. belge.css · @media print). -->
+  <div class="kapsayici belge-cikti" id="belge-cikti" hidden>
+    <div class="belge-arac" id="belge-arac">
+      <span id="belge-sayi"></span>
+      <button type="button" id="belge-yazdir" class="dugme dugme-birincil" data-t="belge.yazdir"></button>
+      <button type="button" id="belge-kapat" class="dugme dugme-ikincil" data-t="belge.kapat"></button>
+    </div>
+    <p class="ipucu" id="belge-yazdir-ipucu" data-t="belge.yazdir.ipucu"></p>
+    <div id="belge-listesi" class="belge-listesi"></div>
+  </div>
+</main>
+
+<footer class="alt">
+  <div class="kapsayici alt-ic">
+    <div class="alt-ust">
+      <span class="marka"><img src="logo.png" alt=""><span>E-YOUTHPRENEUR</span></span>
+      <div class="ab-kilit">
+        <img src="ab-amblem.svg" data-t-etiket="ab.amblem" alt="">
+        <span data-t="ab.finanse"></span>
+      </div>
+    </div>
+    <div class="alt-kunye">
+      <span data-t="altbilgi.program"></span>
+      <span data-t="altbilgi.projeno"></span>
+      <span data-t="altbilgi.sure"></span>
+      <span data-t="altbilgi.ajans"></span>
+    </div>
+    <p class="alt-erisim" data-t="altbilgi.erisim"></p>
+    <p class="alt-feragat" data-t="altbilgi.feragat"></p>
+  </div>
+</footer>
+
+</body>
+</html>

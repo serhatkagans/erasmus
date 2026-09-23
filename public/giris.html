@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Ortak Girişi · E-YOUTHPRENEUR</title>
+<link rel="icon" href="logo.png">
+<link rel="stylesheet" href="style.css">
+<script src="giris.js" type="module"></script>
+</head>
+<body data-t-sayfa="giris.baslik">
+
+<header class="ust">
+  <div class="kapsayici ust-ic">
+    <a class="marka" href="./">
+      <img src="logo.png" alt="">
+      <span>E-YOUTHPRENEUR <small data-t="altbilgi.kunye"></small></span>
+    </a>
+    <!-- Menü ortak.js'te tek listeden kurulur (menuyuKur): her sayfada aynı. -->
+    <nav class="gezinme" id="gezinme" data-t-etiket="menu.ana"></nav>
+    <div class="ust-sag">
+      <span id="kullanici-adi" class="kullanici-rozet" hidden></span>
+      <span id="hatirlatici" class="hatirlatici" hidden></span>
+      <div id="dil-secici" class="dil-secici" hidden></div>
+      <button id="parola-dugme" class="dugme dugme-hayalet" hidden data-t="menu.parola"></button>
+      <a id="giris-baglanti" class="dugme dugme-hayalet" href="giris.html" data-t="menu.giris"></a>
+      <button id="cikis-dugme" class="dugme dugme-hayalet" hidden data-t="menu.cikis"></button>
+    </div>
+  </div>
+</header>
+
+<main class="giris-sayfa">
+  <form id="giris-form" class="giris-kart">
+    <h1 data-t="giris.baslik"></h1>
+    <p class="giris-aciklama" data-t="giris.aciklama"></p>
+    <label class="alan"><span data-t="giris.kullanici"></span><input name="kullanici" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required maxlength="100"></label>
+    <label class="alan"><span data-t="giris.parola"></span><input name="parola" type="password" autocomplete="current-password" required></label>
+    <p class="hata" id="giris-hata" role="alert"></p>
+    <button class="dugme dugme-birincil" type="submit" data-t="giris.gonder"></button>
+    <p class="giris-geri"><a class="metin-bag" href="./" data-t="giris.geri"></a></p>
+  </form>
+</main>
+
+<footer class="alt">
+  <div class="kapsayici alt-ic">
+    <div class="alt-ust">
+      <span class="marka"><img src="logo.png" alt=""><span>E-YOUTHPRENEUR</span></span>
+      <div class="ab-kilit">
+        <img src="ab-amblem.svg" data-t-etiket="ab.amblem" alt="">
+        <span data-t="ab.finanse"></span>
+      </div>
+    </div>
+    <div class="alt-kunye">
+      <span data-t="altbilgi.program"></span>
+      <span data-t="altbilgi.projeno"></span>
+      <span data-t="altbilgi.sure"></span>
+      <span data-t="altbilgi.ajans"></span>
+    </div>
+    <p class="alt-erisim" data-t="altbilgi.erisim"></p>
+    <p class="alt-feragat" data-t="altbilgi.feragat"></p>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Profil · E-YOUTHPRENEUR</title>
+<link rel="icon" href="logo.png">
+<link rel="stylesheet" href="style.css">
+<script src="profil.js" type="module"></script>
+</head>
+<body data-t-sayfa="profil.baslik">
+
+<header class="ust">
+  <div class="kapsayici ust-ic">
+    <a class="marka" href="./">
+      <img src="logo.png" alt="">
+      <span>E-YOUTHPRENEUR <small data-t="altbilgi.kunye"></small></span>
+    </a>
+    <!-- Menü ortak.js'te tek listeden kurulur (menuyuKur): her sayfada aynı. -->
+    <nav class="gezinme" id="gezinme" data-t-etiket="menu.ana"></nav>
+    <div class="ust-sag">
+      <span id="kullanici-adi" class="kullanici-rozet" hidden></span>
+      <span id="hatirlatici" class="hatirlatici" hidden></span>
+      <div id="dil-secici" class="dil-secici" hidden></div>
+      <button id="parola-dugme" class="dugme dugme-hayalet" hidden data-t="menu.parola"></button>
+      <a id="giris-baglanti" class="dugme dugme-hayalet" href="giris.html" data-t="menu.giris"></a>
+      <button id="cikis-dugme" class="dugme dugme-hayalet" hidden data-t="menu.cikis"></button>
+    </div>
+  </div>
+</header>
+
+<main class="profil-sayfa">
+  <article class="profil-kart" id="profil-kart" aria-busy="true">
+    <div class="profil-bant"><span data-t="profil.ust"></span></div>
+    <div class="profil-avatar" id="profil-avatar" aria-hidden="true"></div>
+    <div class="profil-foto-eylem" id="profil-foto-eylem" hidden>
+      <label class="dugme dugme-hayalet dugme-kucuk profil-foto-sec">
+        <span data-t="profil.foto.yukle"></span>
+        <input type="file" id="profil-foto-dosya" accept="image/jpeg,image/png,image/webp" class="gorsel-gizli">
+      </label>
+      <button type="button" class="dugme dugme-hayalet dugme-kucuk" id="profil-foto-kaldir" data-t="profil.foto.kaldir" hidden></button>
+      <p class="hata" id="profil-foto-hata" role="alert"></p>
+    </div>
+    <h1 class="profil-ad" id="profil-ad"></h1>
+    <p class="profil-kurum" id="profil-kurum"></p>
+
+    <section class="profil-proje">
+      <img class="profil-logo" src="logo.png" alt="">
+      <h2 data-t="site.ad"></h2>
+      <p class="profil-slogan" data-t="profil.slogan"></p>
+      <p class="profil-metin" data-t="profil.metin"></p>
+    </section>
+
+    <p class="profil-takip" data-t="profil.takip"></p>
+    <nav class="profil-sosyal" id="profil-sosyal" data-t-etiket="profil.takip"></nav>
+
+    <div class="profil-eylem">
+      <button type="button" class="dugme dugme-hayalet" id="profil-paylas" data-t="profil.paylas"></button>
+      <a class="dugme dugme-hayalet" href="./" data-t="profil.site"></a>
+    </div>
+  </article>
+  <p class="profil-yok" id="profil-yok" role="alert" hidden></p>
+</main>
+
+<footer class="alt">
+  <div class="kapsayici alt-ic">
+    <div class="alt-ust">
+      <span class="marka"><img src="logo.png" alt=""><span>E-YOUTHPRENEUR</span></span>
+      <div class="ab-kilit">
+        <img src="ab-amblem.svg" data-t-etiket="ab.amblem" alt="">
+        <span data-t="ab.finanse"></span>
+      </div>
+    </div>
+    <div class="alt-kunye">
+      <span data-t="altbilgi.program"></span>
+      <span data-t="altbilgi.projeno"></span>
+      <span data-t="altbilgi.sure"></span>
+      <span data-t="altbilgi.ajans"></span>
+    </div>
+    <p class="alt-erisim" data-t="altbilgi.erisim"></p>
+    <p class="alt-feragat" data-t="altbilgi.feragat"></p>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Kullanıcılar · E-YOUTHPRENEUR</title>
+<link rel="icon" href="logo.png">
+<link rel="stylesheet" href="style.css">
+<script src="kullanicilar.js" type="module"></script>
+</head>
+<body data-t-sayfa="kullanicilar.baslik">
+
+<a class="atla" href="#icerik" data-t="menu.atla"></a>
+
+<header class="ust">
+  <div class="kapsayici ust-ic">
+    <a class="marka" href="./">
+      <img src="logo.png" alt="">
+      <span>E-YOUTHPRENEUR <small data-t="altbilgi.kunye"></small></span>
+    </a>
+    <!-- Menü ortak.js'te tek listeden kurulur (menuyuKur): her sayfada aynı. -->
+    <nav class="gezinme" id="gezinme" data-t-etiket="menu.ana"></nav>
+    <div class="ust-sag">
+      <span id="kullanici-adi" class="kullanici-rozet" hidden></span>
+      <span id="hatirlatici" class="hatirlatici" hidden></span>
+      <div id="dil-secici" class="dil-secici" hidden></div>
+      <button id="parola-dugme" class="dugme dugme-hayalet" hidden data-t="menu.parola"></button>
+      <a id="giris-baglanti" class="dugme dugme-hayalet" href="giris.html" data-t="menu.giris"></a>
+      <button id="cikis-dugme" class="dugme dugme-hayalet" hidden data-t="menu.cikis"></button>
+    </div>
+  </div>
+</header>
+
+<main id="icerik">
+  <section class="kapsayici sayfa-bas">
+    <span class="ustbaslik" data-t="kullanicilar.ustbaslik"></span>
+    <h1 data-t="kullanicilar.baslik"></h1>
+    <p data-t="kullanicilar.giris"></p>
+    <div class="kahraman-dugmeler">
+      <button id="kullanici-ekle" class="dugme dugme-birincil" hidden data-t="kullanicilar.ekle"></button>
+    </div>
+  </section>
+
+  <div class="kapsayici">
+    <p id="kullanicilar-uyari" class="kullanicilar-uyari" role="alert" hidden></p>
+    <div class="kullanicilar-kart" id="kullanicilar-kart" hidden>
+      <table class="kullanicilar-tablo">
+        <thead>
+          <tr>
+            <th scope="col" data-t="kullanicilar.ad"></th>
+            <th scope="col" data-t="kullanicilar.kullaniciAdi"></th>
+            <th scope="col" data-t="kullanicilar.kurum"></th>
+            <th scope="col" data-t="kullanicilar.yetki"></th>
+            <th scope="col" data-t="kullanicilar.profil"></th>
+            <th scope="col"><span class="gorsel-gizli" data-t="kullanicilar.islem"></span></th>
+          </tr>
+        </thead>
+        <tbody id="kullanicilar-govde"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<footer class="alt">
+  <div class="kapsayici alt-ic">
+    <div class="alt-ust">
+      <span class="marka"><img src="logo.png" alt=""><span>E-YOUTHPRENEUR</span></span>
+      <div class="ab-kilit">
+        <img src="ab-amblem.svg" data-t-etiket="ab.amblem" alt="">
+        <span data-t="ab.finanse"></span>
+      </div>
+    </div>
+    <div class="alt-kunye">
+      <span data-t="altbilgi.program"></span>
+      <span data-t="altbilgi.projeno"></span>
+      <span data-t="altbilgi.sure"></span>
+      <span data-t="altbilgi.ajans"></span>
+    </div>
+    <p class="alt-erisim" data-t="altbilgi.erisim"></p>
+    <p class="alt-feragat" data-t="altbilgi.feragat"></p>
+  </div>
+</footer>
+
+<dialog id="sifirla-kutu">
+  <form id="sifirla-form" class="kutu-ic">
+    <div class="kutu-ust">
+      <h2 data-t="kullanicilar.sifirla"></h2>
+      <button type="button" class="kapat" data-kapat data-t-etiket="genel.kapat">×</button>
+    </div>
+    <p class="kutu-aciklama" id="sifirla-kim"></p>
+    <label class="alan"><span data-t="kullanicilar.yeniParola"></span>
+      <span class="sifirla-satir">
+        <input name="parola" type="text" required autocomplete="off" spellcheck="false">
+        <button type="button" class="dugme dugme-ikincil" id="sifirla-uret" data-t="kullanicilar.uret"></button>
+      </span>
+    </label>
+    <p class="kutu-aciklama" data-t="kullanicilar.sifirlaIpucu"></p>
+    <p class="hata" id="sifirla-hata" role="alert"></p>
+    <p class="sifirla-tamam" id="sifirla-tamam" role="status" hidden></p>
+    <div class="kutu-eylem">
+      <button type="submit" class="dugme dugme-birincil" id="sifirla-kaydet" data-t="kullanicilar.sifirla"></button>
+      <button type="button" class="dugme dugme-ikincil" data-kapat id="sifirla-vazgec" data-t="genel.vazgec"></button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="kullanici-kutu">
+  <form id="kullanici-form" class="kutu-ic">
+    <div class="kutu-ust">
+      <h2 id="kullanici-baslik"></h2>
+      <button type="button" class="kapat" data-kapat data-t-etiket="genel.kapat">×</button>
+    </div>
+    <div class="form-izgara">
+      <label class="alan form-tam"><span data-t="kullanicilar.ad"></span><input name="ad" maxlength="120" required autocomplete="off"></label>
+      <label class="alan"><span data-t="kullanicilar.kullaniciAdi"></span><input name="kullanici" maxlength="40" required pattern="[a-z0-9._\-]{3,40}" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="off"></label>
+      <label class="alan"><span data-t="kullanicilar.kurum"></span><select name="partner" required></select></label>
+      <p class="form-tam alan-ipucu" data-t="kullanicilar.kullaniciIpucu"></p>
+      <p class="form-tam alan-uyari" id="kullanici-nfc" data-t="kullanicilar.nfcUyari" hidden></p>
+      <label class="alan form-tam" id="kullanici-parola-alan"><span data-t="kullanicilar.parola"></span><input name="parola" type="text" required autocomplete="off" spellcheck="false"></label>
+      <label class="onay form-tam"><input name="koordinator" type="checkbox"> <span data-t="kullanicilar.tamYetki"></span></label>
+    </div>
+    <p class="hata" id="kullanici-hata" role="alert"></p>
+    <div class="kutu-eylem">
+      <button type="submit" class="dugme dugme-birincil" data-t="genel.kaydet"></button>
+      <button type="button" class="dugme dugme-ikincil" data-kapat data-t="genel.vazgec"></button>
+    </div>
+  </form>
+</dialog>
+
+</body>
+</html>

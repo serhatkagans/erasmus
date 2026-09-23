@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="E-YOUTHPRENEUR proje yönetim panosu: sözleşmeden nihai rapora numaralı proje klasörleri.">
+<title>Proje klasörleri · E-YOUTHPRENEUR</title>
+<link rel="icon" href="logo.png">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="klasorler.css">
+<script src="klasorler.js" type="module"></script>
+</head>
+<body data-t-sayfa="klasor.sayfa.baslik">
+
+<a class="atla" href="#icerik" data-t="menu.atla"></a>
+
+<header class="ust">
+  <div class="kapsayici ust-ic">
+    <a class="marka" href="./">
+      <img src="logo.png" alt="">
+      <span>E-YOUTHPRENEUR <small data-t="altbilgi.kunye"></small></span>
+    </a>
+    <!-- Menü ortak.js'te tek listeden kurulur (menuyuKur): her sayfada aynı. -->
+    <nav class="gezinme" id="gezinme" data-t-etiket="menu.ana"></nav>
+    <div class="ust-sag">
+      <span id="kullanici-adi" class="kullanici-rozet" hidden></span>
+      <span id="hatirlatici" class="hatirlatici" hidden></span>
+      <div id="dil-secici" class="dil-secici" hidden></div>
+      <button id="parola-dugme" class="dugme dugme-hayalet" hidden data-t="menu.parola"></button>
+      <a id="giris-baglanti" class="dugme dugme-hayalet" href="giris.html" data-t="menu.giris"></a>
+      <button id="cikis-dugme" class="dugme dugme-hayalet" hidden data-t="menu.cikis"></button>
+    </div>
+  </div>
+</header>
+
+<main id="icerik">
+  <section class="kapsayici sayfa-bas">
+    <span class="ustbaslik" data-t="klasor.ustbaslik"></span>
+    <h1 data-t="klasor.sayfa.baslik"></h1>
+    <p data-t="klasor.giris"></p>
+    <!-- Klasör yapısı belgesinin 1. bölümü, belgedeki metinle. -->
+    <h2 class="klasor-bolum-baslik" data-t="klasor.mantik"></h2>
+    <ul class="klasor-ilkeler">
+      <li><strong data-t="klasor.ilke.numara.baslik"></strong><span data-t="klasor.ilke.numara"></span></li>
+      <li><strong data-t="klasor.ilke.tek.baslik"></strong><span data-t="klasor.ilke.tek"></span></li>
+      <li><strong data-t="klasor.ilke.sorumluluk.baslik"></strong><span data-t="klasor.ilke.sorumluluk"></span></li>
+    </ul>
+  </section>
+
+  <div class="kapsayici">
+    <section class="pano bos-durum" id="giris-uyarisi" hidden>
+      <p data-t="klasor.girisGerekli"></p>
+      <a class="dugme dugme-birincil" href="giris.html" data-t="menu.giris"></a>
+    </section>
+
+    <div class="klasor-duzen" id="klasor-duzen" hidden>
+      <aside class="pano klasor-yan" aria-labelledby="klasor-agac-baslik">
+        <div class="klasor-yan-bas">
+          <h2 id="klasor-agac-baslik" data-t="klasor.anaBasliklar"></h2>
+          <p class="ipucu" data-t="klasor.anaBasliklar.not"></p>
+          <input type="search" id="klasor-ara" class="klasor-ara" data-t-yer="klasor.ara" data-t-etiket="klasor.ara">
+          <label class="klasor-bos-sec"><input type="checkbox" id="klasor-bos"> <span data-t="klasor.bosGoster"></span></label>
+          <p class="ipucu" id="klasor-ozet"></p>
+        </div>
+        <nav id="klasor-agac" class="klasor-agac" aria-labelledby="klasor-agac-baslik"></nav>
+      </aside>
+
+      <section class="pano klasor-icerik" id="klasor-icerik" aria-live="polite"></section>
+    </div>
+
+    <!-- Belgenin 6. bölümü: alt başlıkların dayanağı ve 6.1 takvim tablosu;
+         ardından 03.1'deki bütçe dağılımı. Tablolar klasorler.js'te çizilir. -->
+    <section class="pano klasor-ek" id="klasor-takvim-bolum" hidden>
+      <div class="pano-bas"><h2 data-t="klasor.altBasliklar"></h2></div>
+      <div class="klasor-bolum">
+        <p class="klasor-ek-not" data-t="klasor.altBasliklar.not"></p>
+        <h3 class="klasor-ek-bas" data-t="klasor.takvim"></h3>
+        <p class="ipucu" data-t="klasor.takvim.not"></p>
+        <div class="klasor-tablo-sar" id="klasor-takvim"></div>
+      </div>
+    </section>
+
+    <section class="pano klasor-ek" id="klasor-butce-bolum" hidden>
+      <div class="pano-bas"><h2 data-t="klasor.butce"></h2></div>
+      <div class="klasor-bolum" id="klasor-butce"></div>
+    </section>
+  </div>
+</main>
+
+<footer class="alt">
+  <div class="kapsayici alt-ic">
+    <div class="alt-ust">
+      <span class="marka"><img src="logo.png" alt=""><span>E-YOUTHPRENEUR</span></span>
+      <div class="ab-kilit">
+        <img src="ab-amblem.svg" data-t-etiket="ab.amblem" alt="">
+        <span data-t="ab.finanse"></span>
+      </div>
+    </div>
+    <div class="alt-kunye">
+      <span data-t="altbilgi.program"></span>
+      <span data-t="altbilgi.projeno"></span>
+      <span data-t="altbilgi.sure"></span>
+      <span data-t="altbilgi.ajans"></span>
+    </div>
+    <p class="alt-erisim" data-t="altbilgi.erisim"></p>
+    <p class="alt-feragat" data-t="altbilgi.feragat"></p>
+  </div>
+</footer>
+
+</body>
+</html>

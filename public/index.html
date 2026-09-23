@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Erasmus+ KA220-YOU işbirliği ortaklığı: altı ülkeden yedi kurum, gençleri yeşil, sosyal ve dijital girişimcilik için güçlendiriyor.">
+<title>E-YOUTHPRENEUR</title>
+<link rel="icon" href="logo.png">
+<link rel="stylesheet" href="style.css">
+<script src="anasayfa.js" type="module"></script>
+</head>
+<body>
+
+<a class="atla" href="#icerik" data-t="menu.atla"></a>
+
+<header class="ust">
+  <div class="kapsayici ust-ic">
+    <a class="marka" href="./">
+      <img src="logo.png" alt="">
+      <span>E-YOUTHPRENEUR <small data-t="altbilgi.kunye"></small></span>
+    </a>
+    <!-- Menü ortak.js'te tek listeden kurulur (menuyuKur): her sayfada aynı. -->
+    <nav class="gezinme" id="gezinme" data-t-etiket="menu.ana"></nav>
+    <div class="ust-sag">
+      <span id="kullanici-adi" class="kullanici-rozet" hidden></span>
+      <span id="hatirlatici" class="hatirlatici" hidden></span>
+      <div id="dil-secici" class="dil-secici" hidden></div>
+      <button id="parola-dugme" class="dugme dugme-hayalet" hidden data-t="menu.parola"></button>
+      <a id="giris-baglanti" class="dugme dugme-hayalet" href="giris.html" data-t="menu.giris"></a>
+      <button id="cikis-dugme" class="dugme dugme-hayalet" hidden data-t="menu.cikis"></button>
+    </div>
+  </div>
+</header>
+
+<main id="icerik">
+
+  <section class="kahraman">
+    <div class="kapsayici kahraman-ic">
+      <div>
+        <span class="ustbaslik" data-t="anasayfa.ustbaslik"></span>
+        <h1 data-t="anasayfa.baslik"></h1>
+        <p class="kahraman-giris" data-t="anasayfa.giris"></p>
+        <div class="kahraman-dugmeler">
+          <a class="dugme dugme-birincil" href="takvim.html" data-t="anasayfa.cta.takvim"></a>
+          <a class="dugme dugme-ikincil" href="#ispaketleri" data-t="anasayfa.cta.ispaketleri"></a>
+        </div>
+      </div>
+      <div class="sayaclar">
+        <div class="sayac"><strong id="sayac-sure">—</strong><span data-t="anasayfa.sayac.sure"></span></div>
+        <div class="sayac"><strong id="sayac-ortak">—</strong><span data-t="anasayfa.sayac.ortak"></span></div>
+        <div class="sayac"><strong id="sayac-ulke">—</strong><span data-t="anasayfa.sayac.ulke"></span></div>
+        <div class="sayac"><strong id="sayac-etkinlik">—</strong><span data-t="anasayfa.sayac.etkinlik"></span></div>
+        <div class="ilerleme">
+          <span class="ustbaslik" data-t="anasayfa.ilerleme.baslik"></span>
+          <div class="ilerleme-ray"><div id="ilerleme-dolu" class="ilerleme-dolu"></div></div>
+          <div class="ilerleme-alt"><span id="ilerleme-metin"></span><span id="ilerleme-sure"></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bolum bolum-beyaz">
+    <div class="kapsayici">
+      <div class="bolum-bas">
+        <span class="ustbaslik" data-t="anasayfa.yaklasan.baslik"></span>
+        <h2 data-t="anasayfa.yaklasan.baslik"></h2>
+        <p data-t="anasayfa.yaklasan.aciklama"></p>
+      </div>
+      <div id="yaklasan" class="yaklasan-liste"></div>
+      <p class="bolum-devam"><a class="metin-bag" href="takvim.html" data-t="anasayfa.yaklasan.tumu"></a></p>
+    </div>
+  </section>
+
+  <section class="bolum">
+    <div class="kapsayici izgara izgara-genis">
+      <div>
+        <span class="ustbaslik" data-t="anasayfa.amac.ustbaslik"></span>
+        <h2 data-t="anasayfa.amac.ustbaslik"></h2>
+        <p class="amac-metin" data-t="anasayfa.amac.metin"></p>
+      </div>
+      <div>
+        <h3 class="hedef-baslik" data-t="anasayfa.hedef.baslik"></h3>
+        <ul class="hedef-liste">
+          <li data-t="anasayfa.hedef.1"></li>
+          <li data-t="anasayfa.hedef.2"></li>
+          <li data-t="anasayfa.hedef.3"></li>
+          <li data-t="anasayfa.hedef.4"></li>
+          <li data-t="anasayfa.hedef.5"></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="bolum bolum-beyaz" id="ciktilar">
+    <div class="kapsayici">
+      <div class="bolum-bas">
+        <span class="ustbaslik" data-t="menu.ciktilar"></span>
+        <h2 data-t="anasayfa.cikti.baslik"></h2>
+        <p data-t="anasayfa.cikti.aciklama"></p>
+      </div>
+      <div class="izgara">
+        <article class="kart"><div class="kart-numara">1</div><h3 data-t="anasayfa.cikti.1.baslik"></h3><p data-t="anasayfa.cikti.1.metin"></p></article>
+        <article class="kart"><div class="kart-numara">2</div><h3 data-t="anasayfa.cikti.2.baslik"></h3><p data-t="anasayfa.cikti.2.metin"></p></article>
+        <article class="kart"><div class="kart-numara">3</div><h3 data-t="anasayfa.cikti.3.baslik"></h3><p data-t="anasayfa.cikti.3.metin"></p></article>
+        <article class="kart"><div class="kart-numara">4</div><h3 data-t="anasayfa.cikti.4.baslik"></h3><p data-t="anasayfa.cikti.4.metin"></p></article>
+        <article class="kart"><div class="kart-numara">5</div><h3 data-t="anasayfa.cikti.5.baslik"></h3><p data-t="anasayfa.cikti.5.metin"></p></article>
+        <article class="kart"><div class="kart-numara">6</div><h3 data-t="anasayfa.cikti.6.baslik"></h3><p data-t="anasayfa.cikti.6.metin"></p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="bolum" id="ispaketleri">
+    <div class="kapsayici">
+      <div class="bolum-bas">
+        <span class="ustbaslik" data-t="menu.ispaketleri"></span>
+        <h2 data-t="anasayfa.ispaketleri.baslik"></h2>
+        <p data-t="anasayfa.ispaketleri.aciklama"></p>
+      </div>
+      <div id="ispaketleri-izgara" class="izgara"></div>
+    </div>
+  </section>
+
+  <section class="bolum bolum-beyaz" id="ortaklar">
+    <div class="kapsayici">
+      <div class="bolum-bas">
+        <span class="ustbaslik" data-t="menu.ortaklar"></span>
+        <h2 data-t="anasayfa.ortaklar.baslik"></h2>
+        <p data-t="anasayfa.ortaklar.aciklama"></p>
+      </div>
+      <div id="ortaklar-izgara" class="izgara"></div>
+    </div>
+  </section>
+
+  <section class="bolum">
+    <div class="kapsayici kapsayici-dar">
+      <span class="ustbaslik" data-t="anasayfa.kapsayicilik.baslik"></span>
+      <h2 data-t="anasayfa.kapsayicilik.baslik"></h2>
+      <p data-t="anasayfa.kapsayicilik.metin"></p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="alt">
+  <div class="kapsayici alt-ic">
+    <div class="alt-ust">
+      <span class="marka"><img src="logo.png" alt=""><span>E-YOUTHPRENEUR</span></span>
+      <div class="ab-kilit">
+        <img src="ab-amblem.svg" data-t-etiket="ab.amblem" alt="">
+        <span data-t="ab.finanse"></span>
+      </div>
+    </div>
+    <div class="alt-kunye">
+      <span data-t="altbilgi.program"></span>
+      <span data-t="altbilgi.projeno"></span>
+      <span data-t="altbilgi.sure"></span>
+      <span data-t="altbilgi.ajans"></span>
+    </div>
+    <p class="alt-erisim" data-t="altbilgi.erisim"></p>
+    <p class="alt-feragat" data-t="altbilgi.feragat"></p>
+  </div>
+</footer>
+
+</body>
+</html>

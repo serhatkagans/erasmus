@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="E-YOUTHPRENEUR projesinin 24 aylık etkinlik programı: ulusötesi toplantılar, eğitim faaliyetleri, sanal etkinlikler ve çıktı dönemleri.">
+<title>Etkinlik Takvimi · E-YOUTHPRENEUR</title>
+<link rel="icon" href="logo.png">
+<link rel="stylesheet" href="style.css">
+<script src="takvim.js" type="module"></script>
+</head>
+<body data-t-sayfa="takvim.baslik">
+
+<a class="atla" href="#icerik" data-t="menu.atla"></a>
+
+<header class="ust">
+  <div class="kapsayici ust-ic">
+    <a class="marka" href="./">
+      <img src="logo.png" alt="">
+      <span>E-YOUTHPRENEUR <small data-t="altbilgi.kunye"></small></span>
+    </a>
+    <!-- Menü ortak.js'te tek listeden kurulur (menuyuKur): her sayfada aynı. -->
+    <nav class="gezinme" id="gezinme" data-t-etiket="menu.ana"></nav>
+    <div class="ust-sag">
+      <span id="kullanici-adi" class="kullanici-rozet" hidden></span>
+      <span id="hatirlatici" class="hatirlatici" hidden></span>
+      <div id="dil-secici" class="dil-secici" hidden></div>
+      <button id="parola-dugme" class="dugme dugme-hayalet" hidden data-t="menu.parola"></button>
+      <a id="giris-baglanti" class="dugme dugme-hayalet" href="giris.html" data-t="menu.giris"></a>
+      <button id="cikis-dugme" class="dugme dugme-hayalet" hidden data-t="menu.cikis"></button>
+    </div>
+  </div>
+</header>
+
+<main id="icerik">
+  <section class="kapsayici sayfa-bas">
+    <span class="ustbaslik" data-t="takvim.ustbaslik"></span>
+    <h1 data-t="takvim.baslik"></h1>
+    <p data-t="takvim.giris"></p>
+  </section>
+
+  <div class="kapsayici takvim-duzen">
+    <section class="pano" aria-label="Etkinlik programı">
+      <div class="pano-bas">
+        <h2 id="pano-baslik"></h2>
+        <div class="pano-bas-sag">
+          <button id="rapor-dugme" class="dugme dugme-ikincil" hidden data-t="takvim.rapor"></button>
+          <button id="ekle-dugme" class="dugme dugme-birincil" hidden data-t="takvim.ekle"></button>
+        </div>
+      </div>
+
+      <div class="denetimler">
+        <div class="gezinti">
+          <button id="onceki" data-t-etiket="takvim.onceki" aria-label="Önceki">‹</button>
+          <button id="bugun-dugme" data-t="takvim.bugun"></button>
+          <button id="sonraki" data-t-etiket="takvim.sonraki" aria-label="Sonraki">›</button>
+        </div>
+        <div class="ay-secici">
+          <select id="ay-secim" data-t-etiket="takvim.aysec"></select>
+          <select id="yil-secim" data-t-etiket="takvim.yilsec"></select>
+        </div>
+        <div class="gorunum" role="group">
+          <button id="gorunum-ay" aria-pressed="true" data-t="takvim.gorunum.ay"></button>
+          <button id="gorunum-zaman" aria-pressed="false" data-t="takvim.gorunum.zaman"></button>
+          <button id="gorunum-liste" aria-pressed="false" data-t="takvim.gorunum.liste"></button>
+        </div>
+      </div>
+
+      <div class="filtreler">
+        <label class="alan alan-genis">
+          <span data-t="takvim.ara"></span>
+          <input id="arama" type="search" maxlength="100" data-t-yer="takvim.ara.ipucu">
+        </label>
+        <label class="alan"><span data-t="takvim.filtre.ispaketi"></span><select id="filtre-wp"></select></label>
+        <label class="alan"><span data-t="takvim.filtre.tur"></span><select id="filtre-tur"></select></label>
+        <label class="alan"><span data-t="takvim.filtre.ortak"></span><select id="filtre-ortak"></select></label>
+        <label class="alan"><span data-t="takvim.filtre.durum"></span><select id="filtre-durum"></select></label>
+        <button id="filtre-temizle" class="metin-bag" data-t="takvim.filtre.temizle"></button>
+      </div>
+
+      <div id="gorunum-kabi"></div>
+
+      <div class="pano-alt">
+        <div class="gosterge" id="gosterge"></div>
+        <span id="pano-sayi" class="pano-sayi"></span>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="alt">
+  <div class="kapsayici alt-ic">
+    <div class="alt-ust">
+      <span class="marka"><img src="logo.png" alt=""><span>E-YOUTHPRENEUR</span></span>
+      <div class="ab-kilit">
+        <img src="ab-amblem.svg" data-t-etiket="ab.amblem" alt="">
+        <span data-t="ab.finanse"></span>
+      </div>
+    </div>
+    <div class="alt-kunye">
+      <span data-t="altbilgi.program"></span>
+      <span data-t="altbilgi.projeno"></span>
+      <span data-t="altbilgi.sure"></span>
+      <span data-t="altbilgi.ajans"></span>
+    </div>
+    <p class="alt-erisim" data-t="altbilgi.erisim"></p>
+    <p class="alt-feragat" data-t="altbilgi.feragat"></p>
+  </div>
+</footer>
+
+<!-- Etkinlik ayrıntısı -->
+<dialog id="detay-kutu">
+  <div class="kutu-ic">
+    <div class="kutu-ust">
+      <h2 id="detay-baslik"></h2>
+      <button type="button" class="kapat" data-kapat aria-label="Kapat">×</button>
+    </div>
+    <div id="detay-etiketler" class="kutu-etiketler"></div>
+    <dl id="detay-satirlar" class="kutu-satirlar"></dl>
+    <div id="detay-ozet" class="kutu-ozet" hidden></div>
+    <div id="detay-fotolar" class="foto-galeri" hidden></div>
+    <div class="kutu-eylem">
+      <button id="detay-duzenle" class="dugme dugme-ikincil" hidden data-t="genel.duzenle"></button>
+      <button id="detay-sil" class="dugme dugme-tehlike" hidden data-t="genel.sil"></button>
+      <a id="detay-baglanti" class="metin-bag" target="_blank" rel="noopener noreferrer" hidden data-t="etkinlik.baglanti"></a>
+    </div>
+  </div>
+</dialog>
+
+<!-- Etkinlik ekleme / düzenleme -->
+<dialog id="form-kutu">
+  <form id="etkinlik-form" class="kutu-ic">
+    <div class="kutu-ust">
+      <h2 id="form-baslik"></h2>
+      <button type="button" class="kapat" data-kapat aria-label="Kapat">×</button>
+    </div>
+    <p id="form-kilit" class="uyari" hidden data-t="form.resmi.kilit"></p>
+    <div class="form-izgara">
+      <label class="alan form-tam"><span data-t="form.ad"></span><input name="baslik" maxlength="160" required></label>
+      <label class="alan"><span data-t="takvim.filtre.ispaketi"></span><select name="wp"></select></label>
+      <label class="alan"><span data-t="takvim.filtre.tur"></span><select name="tur"></select></label>
+      <label class="alan"><span data-t="etkinlik.yer"></span><select name="yer"></select></label>
+      <label class="alan"><span data-t="etkinlik.lider"></span><select name="lider"></select></label>
+      <label class="alan"><span data-t="form.baslangic"></span><input name="baslangic" type="date" required></label>
+      <label class="alan"><span data-t="form.bitis"></span><input name="bitis" type="date" required></label>
+      <label class="alan"><span data-t="etkinlik.durum"></span><select name="durum"></select></label>
+      <label class="alan"><span data-t="form.url"></span><input name="url" type="url" maxlength="500" placeholder="https://"></label>
+      <label class="alan form-tam"><span data-t="form.ozet"></span><textarea name="ozet" maxlength="4000"></textarea></label>
+      <fieldset class="alan form-tam">
+        <legend class="alan-legend" data-t="etkinlik.katilimci"></legend>
+        <div id="form-katilimcilar" class="onay-izgara"></div>
+      </fieldset>
+      <fieldset class="alan form-tam">
+        <legend class="alan-legend" data-t="foto.baslik"></legend>
+        <div id="form-fotolar" class="foto-galeri"></div>
+        <input id="foto-sec" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple>
+        <p class="ipucu" id="foto-ipucu"></p>
+      </fieldset>
+    </div>
+    <p class="hata" id="form-hata" role="alert"></p>
+    <div class="kutu-eylem">
+      <button type="submit" class="dugme dugme-birincil" data-t="genel.kaydet"></button>
+      <button type="button" class="dugme dugme-ikincil" data-kapat data-t="genel.vazgec"></button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Faaliyet raporu -->
+<dialog id="rapor-kutu">
+  <form id="rapor-form" class="kutu-ic">
+    <div class="kutu-ust">
+      <h2 data-t="rapor.baslik"></h2>
+      <button type="button" class="kapat" data-kapat aria-label="Kapat">×</button>
+    </div>
+    <p class="kutu-aciklama" data-t="rapor.aciklama"></p>
+    <div class="form-izgara">
+      <label class="alan"><span data-t="form.baslangic"></span><input name="bas" type="date" required></label>
+      <label class="alan"><span data-t="form.bitis"></span><input name="bit" type="date" required></label>
+    </div>
+    <button type="button" id="rapor-tum-donem" class="metin-bag" data-t="rapor.donem.tum"></button>
+    <!-- Takvimdeki süzgeçler rapora da uygulanır; hangileri olduğu burada yazar. -->
+    <p class="ipucu" id="rapor-kapsam"></p>
+    <!-- Arama yazılıysa: rapora yalnızca işaretli kalanlar girer. -->
+    <fieldset class="alan form-tam" id="rapor-eslesen-alan" hidden>
+      <legend class="alan-legend"><span data-t="rapor.eslesen"></span> <small id="rapor-eslesen-sayi"></small></legend>
+      <div id="rapor-eslesen" class="onay-izgara"></div>
+    </fieldset>
+    <fieldset class="alan form-tam rapor-bicim">
+      <legend class="alan-legend" data-t="rapor.bicim"></legend>
+      <div class="onay-izgara">
+        <label class="onay"><input type="radio" name="bicim" value="docx" checked> <span data-t="rapor.bicim.docx"></span></label>
+        <label class="onay"><input type="radio" name="bicim" value="xlsx"> <span data-t="rapor.bicim.xlsx"></span></label>
+        <label class="onay"><input type="radio" name="bicim" value="zip"> <span data-t="rapor.bicim.zip"></span></label>
+      </div>
+    </fieldset>
+    <p class="hata" id="rapor-hata" role="alert"></p>
+    <div class="kutu-eylem">
+      <button type="submit" class="dugme dugme-birincil" data-t="rapor.indir"></button>
+      <button type="button" class="dugme dugme-ikincil" data-kapat data-t="genel.vazgec"></button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Parola değiştirme -->
+
+</body>
+</html>

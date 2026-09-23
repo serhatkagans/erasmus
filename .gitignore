@@ -1,0 +1,29 @@
+node_modules/
+data/
+.env
+.env.*
+!.env.example
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.dump
+*.tar.gz
+*.log
+
+# Takvim uygulamasiyla ayni kural: yerel calisma ve dagitim dosyalari.
+DURUM.md
+SURUMLER.md
+DAGITIM.md
+baslat.bat
+durdur.bat
+deploy/
+.agents/
+.codex/
+.claude/
+
+# Yerel basvuru ve planlama belgeleri; uygulama bunlari okumaz.
+/KA220-YOU-70AE2506.md
+/*.docx
+/*.xlsx
+/logo/

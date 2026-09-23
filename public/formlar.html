@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Formlar · E-YOUTHPRENEUR</title>
+<link rel="icon" href="logo.png">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="form.css">
+<script src="formlar.js" type="module"></script>
+</head>
+<body data-t-sayfa="form.sayfa.baslik">
+
+<a class="atla" href="#icerik" data-t="menu.atla"></a>
+
+<header class="ust">
+  <div class="kapsayici ust-ic">
+    <a class="marka" href="./">
+      <img src="logo.png" alt="">
+      <span>E-YOUTHPRENEUR <small data-t="altbilgi.kunye"></small></span>
+    </a>
+    <!-- Menü ortak.js'te tek listeden kurulur (menuyuKur): her sayfada aynı. -->
+    <nav class="gezinme" id="gezinme" data-t-etiket="menu.ana"></nav>
+    <div class="ust-sag">
+      <span id="kullanici-adi" class="kullanici-rozet" hidden></span>
+      <span id="hatirlatici" class="hatirlatici" hidden></span>
+      <div id="dil-secici" class="dil-secici" hidden></div>
+      <button id="parola-dugme" class="dugme dugme-hayalet" hidden data-t="menu.parola"></button>
+      <a id="giris-baglanti" class="dugme dugme-hayalet" href="giris.html" data-t="menu.giris"></a>
+      <button id="cikis-dugme" class="dugme dugme-hayalet" hidden data-t="menu.cikis"></button>
+    </div>
+  </div>
+</header>
+
+<main id="icerik">
+  <!--
+    Görünümler adres çubuğundaki # ile seçilir (formlar.js → yonlendir):
+      #              form listesi
+      #yeni          yeni form (koordinatör)
+      #duzenle/12    formu düzenle (koordinatör)
+      #doldur/12     formu doldur / önizle
+      #yanitlar/12   yanıtlar (koordinatör)
+  -->
+  <section class="kapsayici sayfa-bas" id="sayfa-bas">
+    <span class="ustbaslik" id="bas-ustbaslik"></span>
+    <h1 id="bas-baslik"></h1>
+    <p id="bas-giris"></p>
+  </section>
+
+  <div class="kapsayici fp-govde">
+    <p id="sayfa-hata" class="hata" role="alert"></p>
+
+    <!-- Liste -->
+    <section id="liste-gorunum" hidden>
+      <div class="fp-arac">
+        <label class="alan alan-genis">
+          <span data-t="form.ara"></span>
+          <input id="liste-arama" type="search" maxlength="100" data-t-yer="form.ara.ipucu">
+        </label>
+        <button id="yeni-form" class="dugme dugme-birincil" hidden data-t="form.yeni"></button>
+      </div>
+      <div id="hal-suzgec" class="gorunum hal-suzgec" role="group" hidden>
+        <button type="button" data-hal="hepsi" aria-pressed="true"><span data-t="form.suzgec.hepsi"></span> <small></small></button>
+        <button type="button" data-hal="taslak" aria-pressed="false"><span data-t="form.hal.taslak"></span> <small></small></button>
+        <button type="button" data-hal="acik" aria-pressed="false"><span data-t="form.hal.acik"></span> <small></small></button>
+        <button type="button" data-hal="kapali" aria-pressed="false"><span data-t="form.hal.kapali"></span> <small></small></button>
+      </div>
+      <div id="form-listesi" class="form-listesi"></div>
+    </section>
+
+    <!-- Form oluşturma / düzenleme (koordinatör). Google Formlar düzeni: dar
+         sütun, üstte renk bantlı başlık kartı, altında soru kartları; seçili
+         kart düzenlenir, ötekiler ortağın göreceği biçimde önizlenir. -->
+    <section id="duzenle-gorunum" class="gf" hidden>
+      <nav class="gf-sekme" aria-label="Form bölümleri">
+        <button type="button" data-duzenle-sekme="sorular" aria-pressed="true" data-t="form.sekme.sorular"></button>
+        <button type="button" data-duzenle-sekme="ayarlar" aria-pressed="false" data-t="form.sekme.ayarlar"></button>
+        <a id="duzenle-yanitlar" href="#" hidden></a>
+      </nav>
+      <div id="duzenle-durum" class="durum-serit"></div>
+      <p id="duzenle-uyari" class="fp-not" hidden></p>
+
+      <form id="duzenle-form" class="fp-yigin" novalidate>
+        <!-- Kapak görseli: formun tepesinde, ortak formu açınca ilk bunu görür. -->
+        <div class="gf-kapak" id="duzenle-kapak" data-pano="sorular" hidden>
+          <img data-t-etiket="form.kapak.alt" alt="">
+          <div class="gf-kapak-arac">
+            <button type="button" class="dugme dugme-ikincil" data-gorsel="sec" data-t="form.kapak.degistir"></button>
+            <button type="button" class="dugme dugme-ikincil" data-gorsel="kaldir" data-t="form.kapak.kaldir"></button>
+          </div>
+        </div>
+        <input type="file" id="gorsel-girdi" accept="image/jpeg,image/png,image/webp" hidden>
+
+        <div class="fp-kart gf-bas" data-pano="sorular">
+          <!-- Başlık ve açıklama biçimli metin: seçilince altında araç çubuğu açılır. -->
+          <div class="gf-zengin">
+            <div id="baslik-duzenleyici" class="gf-baslik-girdi zengin-duzenleyici" contenteditable="true" role="textbox" aria-required="true" data-satir-ici></div>
+            <div class="zengin-arac" role="toolbar">
+              <button type="button" data-cmd="bold" aria-pressed="false"><b>B</b></button>
+              <button type="button" data-cmd="italic" aria-pressed="false"><i>I</i></button>
+              <button type="button" data-cmd="underline" aria-pressed="false"><u>U</u></button>
+              <span class="zengin-ayirac" aria-hidden="true"></span>
+              <button type="button" data-cmd="removeFormat"><s>T</s></button>
+            </div>
+          </div>
+          <div class="gf-zengin">
+            <div id="aciklama-duzenleyici" class="gf-aciklama-girdi zengin-duzenleyici" contenteditable="true" role="textbox" aria-multiline="true"></div>
+            <div class="zengin-arac" role="toolbar">
+              <button type="button" data-cmd="bold" aria-pressed="false"><b>B</b></button>
+              <button type="button" data-cmd="italic" aria-pressed="false"><i>I</i></button>
+              <button type="button" data-cmd="underline" aria-pressed="false"><u>U</u></button>
+              <span class="zengin-ayirac" aria-hidden="true"></span>
+              <button type="button" data-cmd="insertUnorderedList" aria-pressed="false"><span aria-hidden="true">•≡</span></button>
+              <button type="button" data-cmd="insertOrderedList" aria-pressed="false"><span aria-hidden="true">1≡</span></button>
+              <span class="zengin-ayirac" aria-hidden="true"></span>
+              <button type="button" data-cmd="removeFormat"><s>T</s></button>
+            </div>
+          </div>
+          <button type="button" class="metin-bag gf-kapak-ekle" data-gorsel="sec" id="kapak-ekle" data-t="form.kapak.ekle"></button>
+        </div>
+
+        <div class="fp-kart gf-ayar" data-pano="ayarlar" hidden>
+          <h3 data-t="form.ayar.yanitlar"></h3>
+          <label class="gf-secenek">
+            <span><span data-t="form.ayar.kapali"></span> <small data-t="form.ayar.kapali.ipucu"></small></span>
+            <input name="kapali" type="checkbox" role="switch" class="gf-anahtar">
+          </label>
+          <label class="gf-secenek">
+            <span><span data-t="form.ayar.sontarih"></span> <small data-t="form.ayar.sontarih.ipucu"></small></span>
+            <input name="sonTarih" type="date" class="gf-tarih">
+          </label>
+        </div>
+
+        <fieldset class="fp-kart gf-ayar" data-pano="ayarlar" hidden>
+          <legend class="gorsel-gizli" data-t="form.ayar.kimler"></legend>
+          <h3 aria-hidden="true" data-t="form.ayar.kimler"></h3>
+          <div class="secim-kartlari">
+            <label class="secim-kart"><input type="radio" name="hedef-kip" value="hepsi" checked> <span data-t="form.hedef.hepsi"></span></label>
+            <label class="secim-kart"><input type="radio" name="hedef-kip" value="secili"> <span data-t="form.hedef.secili"></span></label>
+          </div>
+          <label class="gf-secenek">
+            <span><span data-t="form.ayar.koordinator"></span> <small data-t="form.ayar.koordinator.ipucu"></small></span>
+            <input name="koordinatorDoldurur" type="checkbox" role="switch" class="gf-anahtar">
+          </label>
+          <div id="hedef-alan" hidden>
+            <div class="fp-satir">
+              <button type="button" class="metin-bag" data-hedef="hepsi" data-t="form.hedef.tumunuSec"></button>
+              <button type="button" class="metin-bag" data-hedef="hicbiri" data-t="form.hedef.temizle"></button>
+              <small id="hedef-sayi"></small>
+            </div>
+            <div class="onay-izgara" id="hedef-kutular"></div>
+          </div>
+        </fieldset>
+      </form>
+
+      <div id="soru-listesi" class="soru-listesi" data-pano="sorular"></div>
+      <div class="fp-ekle-satir" data-pano="sorular">
+        <button type="button" id="soru-ekle" class="dugme dugme-ikincil" data-t="form.soru.ekle"></button>
+        <button type="button" id="bolum-ekle" class="dugme dugme-ikincil" data-t="form.bolum.ekle"></button>
+      </div>
+
+      <div class="fp-eylem fp-yapiskan">
+        <p id="duzenle-hata" class="hata" role="alert"></p>
+        <button type="button" id="yayimla-form" class="dugme dugme-birincil" hidden data-t="form.kaydetYayimla"></button>
+        <button type="button" id="kaydet-form" class="dugme dugme-birincil"></button>
+        <a class="dugme dugme-ikincil" href="#" data-t="genel.vazgec"></a>
+        <button type="button" id="onizle-form" class="dugme dugme-ikincil" data-t="form.onizle"></button>
+        <button type="button" id="sil-form" class="dugme dugme-tehlike" hidden data-t="form.sil"></button>
+      </div>
+    </section>
+
+    <!-- Doldurma / önizleme -->
+    <section id="doldur-gorunum" class="gf" hidden>
+      <form id="doldur-form" class="fp-yigin" novalidate></form>
+    </section>
+
+    <!-- Yanıtlar (koordinatör) -->
+    <section id="yanitlar-gorunum" class="gf" hidden>
+      <nav class="gf-sekme" aria-label="Form bölümleri">
+        <a id="yanitlar-duzenle" href="#" data-t="form.sekme.sorular"></a>
+        <a id="yanitlar-ayarlar" href="#" data-t="form.sekme.ayarlar"></a>
+        <button type="button" aria-pressed="true" aria-current="page" data-t="form.sekme.yanitlar"></button>
+      </nav>
+      <div class="fp-kart gf-bas gf-yanit-bas">
+        <div>
+          <h2 id="yanit-sayisi"></h2>
+          <p id="yanit-giris" class="soluk"></p>
+        </div>
+        <a id="yanit-excel" class="dugme dugme-ikincil" href="#" download data-t="form.excel"></a>
+      </div>
+      <div class="gorunum gf-altsekme" role="tablist">
+        <button type="button" data-sekme="ozet" aria-pressed="true" data-t="form.sekme.ozet"></button>
+        <button type="button" data-sekme="tablo" aria-pressed="false" data-t="form.sekme.tablo"></button>
+        <button type="button" data-sekme="bekleyen" aria-pressed="false"><span data-t="form.sekme.bekleyen"></span> <span id="bekleyen-sayi"></span></button>
+      </div>
+      <div id="yanit-ozet" class="fp-yigin"></div>
+      <div id="yanit-tablo" hidden></div>
+      <div id="yanit-bekleyen" hidden></div>
+    </section>
+  </div>
+</main>
+
+<footer class="alt">
+  <div class="kapsayici alt-ic">
+    <div class="alt-ust">
+      <span class="marka"><img src="logo.png" alt=""><span>E-YOUTHPRENEUR</span></span>
+      <div class="ab-kilit">
+        <img src="ab-amblem.svg" data-t-etiket="ab.amblem" alt="">
+        <span data-t="ab.finanse"></span>
+      </div>
+    </div>
+    <div class="alt-kunye">
+      <span data-t="altbilgi.program"></span>
+      <span data-t="altbilgi.projeno"></span>
+      <span data-t="altbilgi.sure"></span>
+      <span data-t="altbilgi.ajans"></span>
+    </div>
+    <p class="alt-erisim" data-t="altbilgi.erisim"></p>
+    <p class="alt-feragat" data-t="altbilgi.feragat"></p>
+  </div>
+</footer>
+
+<!-- Parola değiştirme -->
+
+</body>
+</html>

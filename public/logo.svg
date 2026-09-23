@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="E-YOUTHPRENEUR">
+  <!-- Yeşil yaprak + dijital düğüm: projenin yeşil ve dijital (ikiz) temasını
+       tek işarette birleştirir. Dış kaynak yüklenmediği için logo satır içi SVG. -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a9e78"/>
+      <stop offset="1" stop-color="#2f6fbf"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="url(#g)"/>
+  <path d="M44 17c0 14-9 23-21 23-2.6 0-4.6-.4-6-1 2-11 10-18 21-19 2.4-.2 4.4-1.4 6-3z"
+        fill="#fff" fill-opacity=".95"/>
+  <path d="M20 47c2-9 7-16 15-20" stroke="#0d5c46" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+  <circle cx="45" cy="44" r="4.2" fill="#fff"/>
+  <circle cx="33" cy="52" r="3.2" fill="#fff" fill-opacity=".85"/>
+  <path d="M45 44 33 52" stroke="#fff" stroke-width="2" stroke-opacity=".8"/>
+</svg>
