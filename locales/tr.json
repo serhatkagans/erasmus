@@ -204,6 +204,9 @@
   "etkinlik.wp4-a4-tpm6-final.ozet": "TPM-6 ve Final Uluslararası Konferansı, proje sonuçlarını uluslararası düzeyde 26 katılımcıya ulaştırır. Yerel çoğaltıcı etkinliklerin planlanması, tüm ortak ülkelerde yapılandırılmış yaygınlaştırma ve daha geniş etki sağlar.",
   "ab.finanse": "Avrupa Birliği tarafından finanse edilmektedir",
   "ab.amblem": "Avrupa Birliği",
+  "ab.logo.ortak": "Avrupa Birliği tarafından eş finanse edilmektedir",
+  "ab.logo.ajans": "Türkiye Ulusal Ajansı",
+  "ab.logo.baskanlik": "T.C. Dışişleri Bakanlığı Avrupa Birliği Başkanlığı",
   "altbilgi.program": "Erasmus+ Programı · Gençlik alanında işbirliği ortaklıkları (KA220-YOU)",
   "altbilgi.projeno": "Proje No: KA220-YOU-70AE2506",
   "altbilgi.ajans": "Ulusal Ajans: TR01 — Türkiye Ulusal Ajansı",
@@ -1069,5 +1072,16 @@
   "ekip.hata.kisi": "Listeden bir kişi seçin.",
   "ekip.hata.baskaKurum": "Bu kişi başka bir kurumun hesabı; yalnızca kendi kurumunun ekibine eklenebilir.",
   "ekip.hata.zatenVar": "Bu kişi zaten ekipte.",
-  "ekip.hata.silinmez": "Ekip üyesi ekipten çıkarılamaz; kişi ancak hesabı silinince ekipten ayrılır."
+  "ekip.hata.silinmez": "Ekip üyesi ekipten çıkarılamaz; kişi ancak hesabı silinince ekipten ayrılır.",
+  "klasor.hata.bagli": "Bu klasör faaliyet dosyasına bağlı; buraya yalnızca yükleme yapılabilir, dosya taşınamaz ya da kısayol eklenemez.",
+  "klasor.bagli.not": "Bu klasör faaliyet dosyasının “%{parca}” bölümüdür. Buraya yüklenen belge takvimdeki faaliyette de görünür; iki yere ayrı ayrı yüklemeyin.",
+  "klasor.bagli.ac": "Faaliyeti takvimde aç →",
+  "klasor.bagli.dosyaNot": "Faaliyet dosyasında; takvimdeki faaliyette de görünür.",
+  "klasor.bagli.takvimden": "Bu bölüm takvimdeki faaliyetten eklenir: fotoğraflar faaliyetin galerisine yüklenir, anket Formlar’dan faaliyete bağlanır.",
+  "klasor.bagli.yetkiYok": "Bu klasöre yalnızca faaliyetin lider kurumu ve koordinatör yükleyebilir; belgeyi onlara iletin.",
+  "klasor.izgara": "Izgara görünümü",
+  "klasor.tum": "Tüm klasörler",
+  "klasor.bosYok": "Burada boş klasör yok; hepsinde belge var.",
+  "menu.tema.yesil": "Temayı değiştir: yeşil bant",
+  "menu.tema.mavi": "Temayı değiştir: mavi bant"
 }

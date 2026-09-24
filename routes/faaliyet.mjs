@@ -1,7 +1,7 @@
 import { ValidationError } from '../lib/data.mjs';
 import { send, body, rawBody, ekGonder, basliktanOku } from '../lib/http.mjs';
 import { DOSYA_TURLERI, parcalar } from '../lib/faaliyet.mjs';
-import { dosyaBilgisi, MAX_KLASOR_BYTES } from '../lib/klasor.mjs';
+import { dosyaBilgisi, MAX_KLASOR_BYTES, parcaKlasoru } from '../lib/klasor.mjs';
 
 /**
  * Faaliyet dosyası: bkz. lib/faaliyet.mjs.
@@ -11,6 +11,10 @@ import { dosyaBilgisi, MAX_KLASOR_BYTES } from '../lib/klasor.mjs';
  *   PUT    /api/etkinlikler/:id/anket          memnuniyet anketini bağla {formId|null}
  *   GET    /api/faaliyet-dosya/:fid            indir
  *   DELETE /api/faaliyet-dosya/:fid            sil
+ *
+ * Toplantı klasörlerinin iç klasörleri (05.x) bu dosyaları gösterir; bağ
+ * kurulmadan önce oraya klasör dosyası olarak yüklenmiş belgeler de parçada
+ * `klasorde` altında listelenir ve parçayı tamamlar (bkz. lib/klasor.mjs).
  *
  * YETKİ etkinliğinkiyle aynı: lider kurum ve koordinatör yükler/siler/bağlar;
  * her üye görür ve indirir.
@@ -36,7 +40,7 @@ export function faaliyetRoutes({ db }) {
       return send(res, 200, { ok: true });
     }
 
-    const e = await db.get('SELECT id,tur,lider FROM events WHERE id=?', [Number(ic[1])]);
+    const e = await db.get('SELECT id,slug,tur,lider FROM events WHERE id=?', [Number(ic[1])]);
     if (!e) return send(res, 404, { error: 'faaliyet.hata.yok' });
     const liste = parcalar(e.tur);
 
@@ -46,6 +50,17 @@ export function faaliyetRoutes({ db }) {
            FROM event_files f LEFT JOIN users u ON u.id=f.yukleyen WHERE f.event_id=? ORDER BY f.created`, [e.id]);
       const foto = Number((await db.get('SELECT CAST(count(*) AS INTEGER) AS n FROM event_photos WHERE event_id=?', [e.id])).n);
       const anket = await db.get("SELECT id,baslik FROM forms WHERE event_id=? AND silindi='' ORDER BY id LIMIT 1", [e.id]);
+      const eskiler = await db.all(
+        `SELECT d.id, d.klasor, d.ad, s.id AS surum_id, s.boyut, s.created, u.ad AS yukleyen_ad, u.username
+           FROM klasor_dosya d
+           JOIN klasor_surum s ON s.dosya_id=d.id AND s.no=(SELECT max(no) FROM klasor_surum y WHERE y.dosya_id=d.id)
+           LEFT JOIN users u ON u.id=d.yukleyen
+          WHERE d.klasor IN (${liste.map(() => '?').join(',') || 'NULL'}) ORDER BY d.created`,
+        liste.map(tur => parcaKlasoru(e.slug, tur) || ''));
+      const klasorde = tur => eskiler.filter(d => d.klasor === parcaKlasoru(e.slug, tur)).map(d => ({
+        id: d.id, klasor: d.klasor, surumId: d.surum_id, ad: d.ad, boyut: Number(d.boyut), created: d.created,
+        yukleyen: d.yukleyen_ad || d.username || '',
+      }));
       const yetkili = mayEdit(user, e);
       /* Bağlanabilecek formlar yalnızca bağlama yetkisi olana gönderilir. */
       const secenekler = yetkili
@@ -54,12 +69,13 @@ export function faaliyetRoutes({ db }) {
       return send(res, 200, {
         yetkili,
         parcalar: liste.map(tur => {
-          if (tur === 'foto') return { tur, tamam: foto > 0, sayi: foto };
-          if (tur === 'anket') return { tur, tamam: !!anket, form: anket || null };
+          const eski = klasorde(tur);
+          if (tur === 'foto') return { tur, tamam: foto > 0 || eski.length > 0, sayi: foto, klasorde: eski };
+          if (tur === 'anket') return { tur, tamam: !!anket || eski.length > 0, form: anket || null, klasorde: eski };
           const kendi = dosyalar.filter(d => d.tur === tur).map(d => ({
             id: d.id, ad: d.ad, boyut: Number(d.boyut), created: d.created, yukleyen: d.yukleyen_ad || d.username || '',
           }));
-          return { tur, tamam: kendi.length > 0, dosyalar: kendi };
+          return { tur, tamam: kendi.length > 0 || eski.length > 0, dosyalar: kendi, klasorde: eski };
         }),
         secenekler,
       });

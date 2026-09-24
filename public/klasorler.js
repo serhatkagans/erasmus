@@ -34,6 +34,14 @@ let secili = '';
 let gorunum = null;
 const acik = new Set();
 
+/* Izgara görünümü (Drive gibi): ağaç gizlenir, klasörler simgeli kutular
+   olarak içerik alanında açılır, üstte yol çubuğu durur. Tercih kişinin
+   tarayıcısında kalır; saklanamazsa ağaç görünümü açılır. */
+const IZGARA_ANAHTAR = 'eyp.klasor.izgara';
+let izgara = false;
+try { izgara = localStorage.getItem(IZGARA_ANAHTAR) === '1'; } catch { /* saklama kapalı */ }
+const KLASOR_SIMGE = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h4.6l2 2h8.4A1.5 1.5 0 0 1 21 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z"/></svg>';
+
 /* --- Ad ve sayılar ------------------------------------------------------ */
 const numara = k => (/^[\d.]+$/.test(k.id) ? k.id : '');
 function ad(k) {
@@ -46,10 +54,15 @@ const tamAd = k => [numara(k), ad(k)].filter(Boolean).join(' ');
 const cocuklar = id => veri.klasorler.filter(k => k.ust === id);
 const altAgac = id => veri.klasorler.filter(k => k.id === id || k.id.startsWith(id + '.'));
 
+/** Faaliyete bağlı fotoğraf ve anket klasörlerinde dosya yerine sayılanlar. */
+const bagliSayi = k => (k.bagli ? (k.bagli.sayi || 0) + (k.bagli.form ? 1 : 0) : 0);
+
 /** Klasörde (alt klasörler dahil) duran ve kısayolla görünen dosyalar. */
 function sayi(id) {
-  const kimlikler = new Set(altAgac(id).map(k => k.id));
-  return veri.dosyalar.filter(d => kimlikler.has(d.klasor) || d.kisayollar.some(k => kimlikler.has(k))).length;
+  const altlar = altAgac(id);
+  const kimlikler = new Set(altlar.map(k => k.id));
+  return veri.dosyalar.filter(d => kimlikler.has(d.klasor) || d.kisayollar.some(k => kimlikler.has(k))).length
+    + altlar.reduce((n, k) => n + bagliSayi(k), 0);
 }
 
 const boyut = b => {
@@ -59,6 +72,8 @@ const boyut = b => {
 const gun = iso => tamTarih(iso.slice(0, 10));
 
 function sahipMetni(k) {
+  /* Bağlı klasörde yükleme faaliyetin lider kurumundadır. */
+  if (k.bagli) return `${ortakKisa(k.bagli.lider)} ${t('klasor.sahip.koordinator')}`;
   if (k.sahip.includes('*')) return t('klasor.sahip.herkes');
   return `${k.sahip.map(ortakKisa).join(', ')} ${t('klasor.sahip.koordinator')}`;
 }
@@ -111,7 +126,7 @@ function agaciCiz() {
   };
   $('klasor-agac').replaceChildren(liste(null));
 
-  const dolu = veri.klasorler.filter(k => veri.dosyalar.some(d => d.klasor === k.id || d.kisayollar.includes(k.id))).length;
+  const dolu = veri.klasorler.filter(k => bagliSayi(k) || veri.dosyalar.some(d => d.klasor === k.id || d.kisayollar.includes(k.id))).length;
   $('klasor-ozet').textContent = t('klasor.ozet', { dolu, toplam: veri.klasorler.length, dosya: veri.dosyalar.length });
 }
 
@@ -122,19 +137,54 @@ function sec_(id, { kaydir = true } = {}) {
   /* Seçilen klasörün yolu açılır ki ağaçta nerede olduğu görünsün. */
   for (let k = dizin.get(id); k; k = dizin.get(k.ust)) acik.add(k.id);
   if (id && decodeURIComponent(location.hash.slice(1)) !== id) history.replaceState(null, '', '#' + id);
+  /* Izgarada kök (tüm klasörler) de bir yerdir; adresi boş # değil, yalın sayfadır. */
+  if (!id && location.hash) history.replaceState(null, '', location.pathname + location.search);
   agaciCiz();
   icerigiCiz();
   if (kaydir && id && matchMedia('(max-width: 900px)').matches) $('klasor-icerik').scrollIntoView({ block: 'start' });
 }
 
 /* --- İçerik ------------------------------------------------------------- */
-function klasorSecimi(istisna = []) {
+/** Klasör kutuları. Ağaç görünümünde satır listesi, ızgarada simgeli kutular. */
+function kartlar(klasorler) {
+  const izgaraKap = el('div', `klasor-kartlar${izgara ? ' klasor-izgara' : ''}`);
+  /* "Yalnızca boş klasörler": kendisi ya da altındakilerden biri boş olan
+     kutu kalır — ağaçtaki kuralın aynısı, eksik belgeye giden yol açık kalsın. */
+  const yalnizBos = $('klasor-bos').checked;
+  for (const a of klasorler) {
+    if (yalnizBos && !altAgac(a.id).some(x => sayi(x.id) === 0)) continue;
+    const kart = dugme('', 'klasor-kart');
+    const n = sayi(a.id);
+    kart.dataset.bos = String(n === 0);
+    if (izgara) {
+      const simge = el('span', 'klasor-simge');
+      simge.innerHTML = KLASOR_SIMGE;
+      kart.append(simge);
+    }
+    if (numara(a)) kart.append(el('span', 'klasor-no', numara(a)));
+    kart.append(el('span', 'klasor-kart-ad', ad(a)));
+    kart.append(el('span', 'klasor-kart-adet', t('klasor.dosyaSayisi', { n })));
+    kart.addEventListener('click', () => sec_(a.id, { kaydir: false }));
+    izgaraKap.append(kart);
+  }
+  if (yalnizBos && klasorler.length && !izgaraKap.childElementCount) return el('p', 'klasor-bos-not', t('klasor.bosYok'));
+  return izgaraKap;
+}
+
+function izgaraUygula() {
+  $('klasor-duzen').dataset.izgara = String(izgara);
+  $('izgara-dugme').setAttribute('aria-pressed', String(izgara));
+}
+
+/* Faaliyete bağlı klasörler yalnızca yükleme hedefi olabilir: klasör
+   dosyası oraya taşınamaz, kısayol konamaz (sunucu da reddeder). */
+function klasorSecimi(istisna = [], { bagliDahil = false } = {}) {
   const secim = el('select', 'klasor-hedef');
   const bos = el('option', '', t('klasor.hedefSec'));
   bos.value = '';
   secim.append(bos);
   for (const k of veri.klasorler) {
-    if (!k.yukleyebilir || istisna.includes(k.id)) continue;
+    if (!k.yukleyebilir || istisna.includes(k.id) || (k.bagli && !bagliDahil)) continue;
     const o = el('option', '', `${'  '.repeat(k.derinlik)}${tamAd(k)}`);
     o.value = k.id;
     secim.append(o);
@@ -181,8 +231,9 @@ async function yukle(dosyalar, hedef, { surumDosyasi = null, aciklama = $('klaso
   for (const f of dosyalar) {
     if (f.size > veri.sinir.bayt) { hataGoster(t('klasor.hata.buyuk', { ad: f.name, mb })); continue; }
     if (durumSatiri) durumSatiri.textContent = t('klasor.yukleniyor', { ad: f.name });
-    const yol = surumDosyasi
-      ? `api/klasorler/dosya/${surumDosyasi}/surum`
+    const bagli = dizin.get(hedef)?.bagli;
+    const yol = surumDosyasi ? `api/klasorler/dosya/${surumDosyasi}/surum`
+      : bagli ? `api/etkinlikler/${bagli.etkinlikId}/dosya?tur=${bagli.parca}`
       : `api/klasorler/dosya?klasor=${encodeURIComponent(hedef)}`;
     const yanit = await fetch(yol, {
       method: 'POST', body: f,
@@ -199,7 +250,47 @@ async function yukle(dosyalar, hedef, { surumDosyasi = null, aciklama = $('klaso
   if (n) bildir(t('klasor.yuklendi', { n }));
 }
 
+/** Faaliyet dosyasından gelen belge: sürümü, taşıması ve kısayolu yoktur;
+ *  indirme ve silme faaliyet dosyasının uçlarından. */
+function faaliyetDosyaSatiri(d) {
+  const li = el('li', 'klasor-dosya');
+  const ust = el('div', 'klasor-dosya-ust');
+  ust.append(el('span', 'klasor-tur', d.ad.includes('.') ? d.ad.split('.').pop().toUpperCase().slice(0, 4) : '?'));
+  const govde = el('div', 'klasor-dosya-govde');
+  const bag = el('a', 'klasor-dosya-ad', d.ad);
+  bag.href = `api/faaliyet-dosya/${d.id}`;
+  bag.setAttribute('download', '');
+  const baslik = el('div', 'klasor-dosya-baslik');
+  baslik.append(bag);
+  govde.append(baslik);
+  const kim = d.yukleyen ? t('klasor.yukleyen', { kurum: ortakKisa(d.partner), kisi: d.yukleyen }) : ortakKisa(d.partner);
+  govde.append(el('p', 'klasor-dosya-meta', `${kim} · ${gun(d.surum.created)} · ${boyut(d.surum.boyut)}`));
+  govde.append(el('p', 'klasor-dosya-not', t('klasor.bagli.dosyaNot')));
+  ust.append(govde);
+  li.append(ust);
+
+  const eylem = el('div', 'klasor-eylem');
+  const indir = el('a', 'metin-bag', t('klasor.indir'));
+  indir.href = bag.href;
+  indir.setAttribute('download', '');
+  eylem.append(indir);
+  if (d.duzenleyebilir) {
+    const sil = dugme(t('genel.sil'), 'metin-bag klasor-sil');
+    sil.addEventListener('click', async () => {
+      if (!(await onayla(t('klasor.silOnay', { ad: d.ad }), { evet: t('genel.sil'), tehlike: true }))) return;
+      try {
+        await iste(`api/faaliyet-dosya/${d.id}`, { method: 'DELETE' });
+        await yenile();
+      } catch (h) { hataGoster(h.message); }
+    });
+    eylem.append(sil);
+  }
+  li.append(eylem);
+  return li;
+}
+
 function dosyaSatiri(d, k) {
+  if (d.kaynak === 'faaliyet') return faaliyetDosyaSatiri(d);
   const li = el('li', 'klasor-dosya');
   const kisayolMu = d.klasor !== k.id;
   if (kisayolMu) li.dataset.kisayol = 'true';
@@ -365,18 +456,7 @@ function aracGorunumunuCiz(kap) {
     el('p', 'klasor-meta', t('klasor.kurumum.not', { n: benim.length })));
   kap.append(bas);
   if (!kokler.length) { kap.append(el('p', 'klasor-bos-not', t('klasor.kurumum.yok'))); return; }
-  const izgara = el('div', 'klasor-kartlar');
-  for (const a of kokler) {
-    const kart = dugme('', 'klasor-kart');
-    const n = sayi(a.id);
-    kart.dataset.bos = String(n === 0);
-    if (numara(a)) kart.append(el('span', 'klasor-no', numara(a)));
-    kart.append(el('span', 'klasor-kart-ad', ad(a)));
-    kart.append(el('span', 'klasor-kart-adet', t('klasor.dosyaSayisi', { n })));
-    kart.addEventListener('click', () => sec_(a.id, { kaydir: false }));
-    izgara.append(kart);
-  }
-  kap.append(izgara);
+  kap.append(kartlar(kokler));
 }
 
 /* --- Dosya yükle kutusu -------------------------------------------------------------
@@ -388,7 +468,7 @@ function yukleKutusunuKur() {
   for (const k of kutu.querySelectorAll('[data-kapat]')) k.addEventListener('click', () => kutu.close());
   $('yukle-dugme').addEventListener('click', () => {
     form.reset();
-    const secim = klasorSecimi();
+    const secim = klasorSecimi([], { bagliDahil: true });
     secim.name = 'klasor';
     secim.required = true;
     if (dizin.get(secili)?.yukleyebilir) secim.value = secili;
@@ -414,6 +494,15 @@ function icerigiCiz() {
   kap.replaceChildren();
   if (gorunum) { aracGorunumunuCiz(kap); return; }
   const k = dizin.get(secili);
+  if (!k && izgara) {
+    /* Izgaranın kökü: yirmi ana klasör. */
+    const bas = el('div', 'klasor-bas');
+    bas.append(el('h2', '', t('klasor.tum')), el('p', 'klasor-meta', $('klasor-ozet').textContent));
+    const bolum = el('section', 'klasor-bolum');
+    bolum.append(kartlar(cocuklar(null)));
+    kap.append(bas, bolum);
+    return;
+  }
   if (!k) {
     kap.append(el('p', 'bos-durum', t('klasor.sec')));
     return;
@@ -425,12 +514,17 @@ function icerigiCiz() {
   yol.setAttribute('aria-label', t('klasor.agac'));
   const zincir = [];
   for (let x = dizin.get(k.ust); x; x = dizin.get(x.ust)) zincir.unshift(x);
+  if (izgara) {
+    const kok = dugme(t('klasor.tum'));
+    kok.addEventListener('click', () => sec_('', { kaydir: false }));
+    yol.append(kok, el('span', 'klasor-yol-ayrac', '/'));
+  }
   for (const x of zincir) {
     const b = dugme(tamAd(x));
     b.addEventListener('click', () => sec_(x.id, { kaydir: false }));
     yol.append(b, el('span', 'klasor-yol-ayrac', '/'));
   }
-  if (zincir.length) bas.append(yol);
+  if (zincir.length || izgara) bas.append(yol);
 
   const h2 = el('h2');
   if (numara(k)) h2.append(el('span', 'klasor-no', numara(k)), ' ');
@@ -454,23 +548,30 @@ function icerigiCiz() {
     kap.append(b);
   }
 
+  /* Faaliyet dosyasına bağlı klasör: içeriğin nereden geldiği söylenir. */
+  if (k.bagli) {
+    const b = el('section', 'klasor-bolum klasor-bagli');
+    b.append(el('p', 'ipucu', t('klasor.bagli.not', { parca: t(`faaliyet.parca.${k.bagli.parca}`) })));
+    if (k.bagli.parca === 'foto') b.append(el('p', '', k.bagli.sayi ? t('faaliyet.foto.var', { n: k.bagli.sayi }) : t('faaliyet.foto.yok')));
+    if (k.bagli.parca === 'anket') {
+      if (k.bagli.form) {
+        const f = el('a', 'metin-bag', k.bagli.form.baslik);
+        f.href = `formlar.html#form-${k.bagli.form.id}`;
+        b.append(f);
+      } else b.append(el('p', '', t('faaliyet.anket.yok')));
+    }
+    const git = el('a', 'metin-bag', t('klasor.bagli.ac'));
+    git.href = `takvim.html#etkinlik-${k.bagli.etkinlikId}`;
+    b.append(el('p', '', '')); b.lastChild.append(git);
+    kap.append(b);
+  }
+
   /* Alt klasörler: kart olarak, dosya sayısıyla. */
   const altlar = cocuklar(k.id);
   if (altlar.length) {
     const bolum = el('section', 'klasor-bolum');
     bolum.append(el('h3', 'klasor-bolum-bas', t('klasor.altKlasorler')));
-    const izgara = el('div', 'klasor-kartlar');
-    for (const a of altlar) {
-      const kart = dugme('', 'klasor-kart');
-      const n = sayi(a.id);
-      kart.dataset.bos = String(n === 0);
-      if (numara(a)) kart.append(el('span', 'klasor-no', numara(a)));
-      kart.append(el('span', 'klasor-kart-ad', ad(a)));
-      kart.append(el('span', 'klasor-kart-adet', t('klasor.dosyaSayisi', { n })));
-      kart.addEventListener('click', () => sec_(a.id, { kaydir: false }));
-      izgara.append(kart);
-    }
-    bolum.append(izgara);
+    bolum.append(kartlar(altlar));
     kap.append(bolum);
   }
 
@@ -479,7 +580,11 @@ function icerigiCiz() {
   const kisayollar = veri.dosyalar.filter(d => d.klasor !== k.id && d.kisayollar.includes(k.id));
   const bolum = el('section', 'klasor-bolum');
   bolum.append(el('h3', 'klasor-bolum-bas', t('klasor.dosyalar')));
-  if (!burada.length && !kisayollar.length) bolum.append(el('p', 'klasor-bos-not', t('klasor.bos')));
+  if (!burada.length && !kisayollar.length) {
+    /* Fotoğraf ve anket klasörünün "dosyası" yukarıdaki bölümde. */
+    if (!bagliSayi(k)) bolum.append(el('p', 'klasor-bos-not', t('klasor.bos')));
+    else bolum.hidden = true;
+  }
   else {
     const ul = el('ul', 'klasor-dosyalar');
     for (const d of [...burada, ...kisayollar]) ul.append(dosyaSatiri(d, k));
@@ -503,6 +608,8 @@ function icerigiCiz() {
     girdi.addEventListener('change', () => girdi.files.length && yukle([...girdi.files], k.id));
 
     const aciklama = el('input', 'klasor-aciklama');
+    /* Faaliyet dosyasında açıklama alanı yok. */
+    aciklama.hidden = !!k.bagli;
     aciklama.id = 'klasor-aciklama';
     aciklama.maxLength = veri.sinir.aciklama || 300;
     aciklama.placeholder = t('klasor.yukle.aciklama');
@@ -522,7 +629,8 @@ function icerigiCiz() {
       if (o.dataTransfer.files.length) yukle([...o.dataTransfer.files], k.id);
     });
   } else {
-    yukleme.append(el('p', 'ipucu', t('klasor.yukle.yetkiYok')));
+    yukleme.append(el('p', 'ipucu', t(k.bagli && ['foto', 'anket'].includes(k.bagli.parca) ? 'klasor.bagli.takvimden'
+      : k.bagli ? 'klasor.bagli.yetkiYok' : 'klasor.yukle.yetkiYok')));
   }
   const s = el('p', 'ipucu');
   s.id = 'klasor-yukleme';
@@ -609,11 +717,20 @@ if (!durum.kullanici) {
     });
   }
   yukleKutusunuKur();
-  $('klasor-bos').addEventListener('change', agaciCiz);
+  $('klasor-bos').addEventListener('change', () => { agaciCiz(); icerigiCiz(); });
+  izgaraUygula();
+  $('izgara-dugme').addEventListener('click', () => {
+    izgara = !izgara;
+    try { localStorage.setItem(IZGARA_ANAHTAR, izgara ? '1' : '0'); } catch { /* saklama kapalı */ }
+    izgaraUygula();
+    /* Ağaçta kök gösterilmez: seçim yoksa ilk klasöre geçilir. */
+    if (!izgara && !secili) sec_('01', { kaydir: false });
+    else icerigiCiz();
+  });
   const ilk = decodeURIComponent(location.hash.slice(1));
-  sec_(dizin.has(ilk) ? ilk : '01', { kaydir: false });
+  sec_(dizin.has(ilk) ? ilk : izgara ? '' : '01', { kaydir: false });
   addEventListener('hashchange', () => {
     const id = decodeURIComponent(location.hash.slice(1));
-    if (id !== secili && dizin.has(id)) sec_(id, { kaydir: false });
+    if (id !== secili && (dizin.has(id) || (izgara && !id))) sec_(id, { kaydir: false });
   });
 }

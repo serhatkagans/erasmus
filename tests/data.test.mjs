@@ -158,3 +158,21 @@ test('soru türleri: seçenek taşıyanlar ve yanıtlanabilirler', () => {
   assert.ok(!answerable({ type: 'bolum' }));
   assert.ok(answerable({ type: 'kisa' }));
 });
+
+test('görev durumu: değiştirilen alan kazanır, tamamlanan görev yeniden açılır', async () => {
+  const { gorevDurumu } = await import('../lib/data.mjs');
+  const tamam = { durum: 'tamamlandi', ilerleme: 100 };
+  /* Açılır listeden "devam ediyor": eskiden %100 yüzünden tamamlandıya dönüyordu. */
+  assert.deepEqual(gorevDurumu('devam', 100, tamam), ['devam', 90]);
+  assert.deepEqual(gorevDurumu('bekliyor', 100, tamam), ['bekliyor', 0]);
+  /* Kaydırıcı %100'den aşağı: durum ilerlemeden çıkar. */
+  assert.deepEqual(gorevDurumu('tamamlandi', 60, tamam), ['devam', 60]);
+  assert.deepEqual(gorevDurumu('tamamlandi', 0, tamam), ['bekliyor', 0]);
+  /* Uçlar yine bağlı. */
+  assert.deepEqual(gorevDurumu('devam', 100, { durum: 'devam', ilerleme: 90 }), ['tamamlandi', 100]);
+  assert.deepEqual(gorevDurumu('tamamlandi', 40, { durum: 'devam', ilerleme: 40 }), ['tamamlandi', 100]);
+  assert.deepEqual(gorevDurumu('iptal', 40, { durum: 'devam', ilerleme: 40 }), ['iptal', 0]);
+  /* Yeni görev (önceki yok). */
+  assert.deepEqual(gorevDurumu('bekliyor', 30), ['devam', 30]);
+  assert.deepEqual(gorevDurumu('devam', 100), ['tamamlandi', 100]);
+});

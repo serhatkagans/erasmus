@@ -819,6 +819,40 @@ test('faaliyet dosyası: lider kurum yükler, parçalar türe göre, özet takvi
   assert.equal((await ortak.iste(`/api/faaliyet-dosya/${yuklendi.veri.id}`, { method: 'DELETE' })).durum, 200);
 });
 
+test('toplantı klasörü faaliyet dosyasını gösterir; iki ayrı depo yok', async () => {
+  const ortak = await istemci(sunucu, ORTAK);            // GEO CLUB: TPM-6 / final lideri
+  const koordinator = await istemci(sunucu, KOORDINATOR);
+  const final = (await ortak.iste('/api/etkinlikler')).veri.etkinlikler.find(e => e.slug === 'wp4-a4-tpm6-final');
+
+  const ilk = (await ortak.iste('/api/klasorler')).veri;
+  const bul = id => ilk.klasorler.find(k => k.id === id);
+  assert.equal(bul('05.8.tutanak').bagli.etkinlikId, final.id);
+  assert.equal(bul('05.8.tutanak').yukleyebilir, true, 'lider kurum yükler');
+  assert.equal(bul('05.1.tutanak').yukleyebilir, false, 'başka faaliyetin lideri yükleyemez');
+  assert.equal(bul('05.8.foto').yukleyebilir, false, 'fotoğraf takvimden eklenir');
+  assert.equal(bul('05.8.sunum').bagli, null);
+  assert.equal(bul('05.7.infopack').bagli, null, 'sanal toplantıda bilgi paketi istenmez');
+
+  /* Bağlı klasöre klasör dosyası konamaz; koordinatör de koyamaz. */
+  assert.equal((await koordinator.iste('/api/klasorler/dosya?klasor=05.8.tutanak', klasorYukle('t.pdf'))).durum, 400);
+  const sunum = await koordinator.iste('/api/klasorler/dosya?klasor=05.8.sunum', klasorYukle('s.pptx'));
+  assert.equal(sunum.durum, 201);
+  assert.equal((await koordinator.iste(`/api/klasorler/dosya/${sunum.veri.id}/kisayol`, { method: 'POST', body: { klasor: '05.8.tutanak' } })).durum, 400);
+  assert.equal((await koordinator.iste(`/api/klasorler/dosya/${sunum.veri.id}`, { method: 'PUT', body: { klasor: '05.8.tutanak' } })).durum, 400);
+
+  /* Faaliyete yüklenen tutanak klasörde görünür. */
+  const yuklendi = await dosyaYukle(ortak, `/api/etkinlikler/${final.id}/dosya?tur=tutanak`, 'tutanak.pdf');
+  assert.equal(yuklendi.durum, 201);
+  const sonra = (await ortak.iste('/api/klasorler')).veri.dosyalar.find(d => d.kaynak === 'faaliyet' && d.id === yuklendi.veri.id);
+  assert.equal(sonra.klasor, '05.8.tutanak');
+  assert.equal(sonra.duzenleyebilir, true);
+  const baska = (await (await istemci(sunucu, ORTAK2)).iste('/api/klasorler')).veri.dosyalar.find(d => d.kaynak === 'faaliyet' && d.id === yuklendi.veri.id);
+  assert.equal(baska.duzenleyebilir, false);
+
+  assert.equal((await ortak.iste(`/api/faaliyet-dosya/${yuklendi.veri.id}`, { method: 'DELETE' })).durum, 200);
+  assert.equal((await koordinator.iste(`/api/klasorler/dosya/${sunum.veri.id}`, { method: 'DELETE' })).durum, 200);
+});
+
 /* --- Pano ---------------------------------------------------------------------- */
 test('pano: kurum kapsamlı; genel durum yalnızca koordinatörde', async () => {
   assert.equal((await (await istemci(sunucu)).iste('/api/pano')).durum, 401);

@@ -204,6 +204,9 @@
   "etkinlik.wp4-a4-tpm6-final.ozet": "TPM-6 and the Final International Conference disseminate project results to 26 participants at international level. Planning of local multiplier events ensures structured dissemination and wider impact across all partner countries.",
   "ab.finanse": "Funded by the European Union",
   "ab.amblem": "European Union",
+  "ab.logo.ortak": "Co-funded by the European Union",
+  "ab.logo.ajans": "Turkish National Agency",
+  "ab.logo.baskanlik": "Directorate for EU Affairs, Ministry of Foreign Affairs of Türkiye",
   "altbilgi.program": "Erasmus+ Programme · Cooperation partnerships in youth (KA220-YOU)",
   "altbilgi.projeno": "Project No: KA220-YOU-70AE2506",
   "altbilgi.ajans": "National Agency: TR01 — Turkish National Agency",
@@ -1069,5 +1072,16 @@
   "ekip.hata.kisi": "Choose a person from the list.",
   "ekip.hata.baskaKurum": "This person's account belongs to another organisation; they can only join their own organisation's team.",
   "ekip.hata.zatenVar": "This person is already in the team.",
-  "ekip.hata.silinmez": "A team member cannot be removed from the team; they leave only when their account is deleted."
+  "ekip.hata.silinmez": "A team member cannot be removed from the team; they leave only when their account is deleted.",
+  "klasor.hata.bagli": "This folder is linked to the activity file; you can only upload here, files cannot be moved in or shortcut here.",
+  "klasor.bagli.not": "This folder is the “%{parca}” part of the activity file. A document uploaded here also appears on the activity in the calendar; do not upload it twice.",
+  "klasor.bagli.ac": "Open the activity in the calendar →",
+  "klasor.bagli.dosyaNot": "In the activity file; also shown on the activity in the calendar.",
+  "klasor.bagli.takvimden": "This part is added from the activity in the calendar: photos go to the activity gallery, the survey is linked from Forms.",
+  "klasor.bagli.yetkiYok": "Only the activity lead partner and the coordinator can upload here; send the document to them.",
+  "klasor.izgara": "Grid view",
+  "klasor.tum": "All folders",
+  "klasor.bosYok": "No empty folders here; every folder has documents.",
+  "menu.tema.yesil": "Switch theme: green band",
+  "menu.tema.mavi": "Switch theme: blue band"
 }

@@ -135,3 +135,17 @@ test('6.1 takvimi: belgedeki on bir satır, her biri bir klasöre bağlı', asyn
     assert.equal(r.baslangic, tohum.get(bagli).baslangic, r.ad);
   }
 });
+
+test('toplantı iç klasörleri faaliyet dosyasının parçalarına bağlanır', async () => {
+  const { bagliParca, parcaKlasoru } = await import('../lib/klasor.mjs');
+  assert.deepEqual(bagliParca('05.1.tutanak'), { etkinlik: 'wp2-a3-acilis-toplantisi', parca: 'tutanak' });
+  assert.deepEqual(bagliParca('05.1.ajanda'), { etkinlik: 'wp2-a3-acilis-toplantisi', parca: 'gundem' });
+  assert.deepEqual(bagliParca('05.1.katilim'), { etkinlik: 'wp2-a3-acilis-toplantisi', parca: 'yoklama' });
+  /* Sunumun faaliyet dosyasında karşılığı yok; 05.9'un faaliyeti yok. */
+  assert.equal(bagliParca('05.1.sunum'), null);
+  assert.equal(bagliParca('05.9.tutanak'), null);
+  assert.equal(bagliParca('05.1'), null);
+  assert.equal(bagliParca('04.2.nihai'), null);
+  assert.equal(parcaKlasoru('wp4-a4-tpm6-final', 'yoklama'), '05.8.katilim');
+  assert.equal(parcaKlasoru('wp4-a1-pilot', 'yoklama'), null, 'pilotun toplantı klasörü yok');
+});

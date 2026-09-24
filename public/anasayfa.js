@@ -119,7 +119,7 @@ function yaklasanlariCiz(etkinlikler) {
 
     const kalan = document.createElement('span');
     kalan.className = 'yaklasan-kalan';
-    kalan.textContent = kalanGun <= 0 ? t('anasayfa.yaklasan.suruyor')
+    kalan.textContent = kalanGun < 0 ? t('anasayfa.yaklasan.suruyor')
       : kalanGun === 0 ? t('anasayfa.yaklasan.bugun')
       : t('anasayfa.yaklasan.kalan', { n: kalanGun });
 

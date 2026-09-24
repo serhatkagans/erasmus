@@ -433,6 +433,50 @@ function parolaKutusunuKur() {
   });
 }
 
+/* --- Tema -------------------------------------------------------------------
+   İki tema (bkz. style.css · :root[data-tema]): varsayılan mavi bant + yeşil
+   vurgu, ikincisi yeşil bant + mavi vurgu. Kişisel bir tercih olduğu için
+   tarayıcıda saklanır; saklanamazsa varsayılan tema açılır. Modül yüklenir
+   yüklenmez uygulanır ki sayfa önce öbür temayla boyanıp sonra değişmesin. */
+const TEMA_ANAHTAR = 'eyp.tema';
+const TEMALAR = ['mavi', 'yesil'];
+function temaOku() {
+  try { const t_ = localStorage.getItem(TEMA_ANAHTAR); return TEMALAR.includes(t_) ? t_ : 'mavi'; } catch { return 'mavi'; }
+}
+function temaUygula(tema) {
+  if (tema === 'yesil') document.documentElement.dataset.tema = 'yesil';
+  else delete document.documentElement.dataset.tema;
+}
+let aktifTema = temaOku();
+temaUygula(aktifTema);
+
+/* Tema düğmesi üst bantta, zilin yanında: hesap menüsünün içinde gözden
+   kaçıyordu (kullanıcı notu, 24 Eylül 2026). Simge yarısı dolu bir daire;
+   etiketi basınca açılacak temayı söyler. Giriş sayfasında da durur. */
+function temaDugmesiniKur() {
+  const yer = document.querySelector('.ust-sag');
+  if (!yer || document.getElementById('tema-dugme')) return;
+  const dugme = document.createElement('button');
+  dugme.type = 'button';
+  dugme.id = 'tema-dugme';
+  dugme.className = 'hatirlatici-dugme tema-dugme';
+  dugme.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg>';
+  const etiketle = () => {
+    const metin = t(aktifTema === 'yesil' ? 'menu.tema.mavi' : 'menu.tema.yesil');
+    dugme.setAttribute('aria-label', metin);
+    dugme.title = metin;
+  };
+  etiketle();
+  dugme.addEventListener('click', () => {
+    aktifTema = aktifTema === 'yesil' ? 'mavi' : 'yesil';
+    try { localStorage.setItem(TEMA_ANAHTAR, aktifTema); } catch { /* saklama kapalı: yalnızca bu sayfada */ }
+    temaUygula(aktifTema);
+    etiketle();
+  });
+  const zil = document.getElementById('hatirlatici');
+  if (zil) zil.after(dugme); else yer.prepend(dugme);
+}
+
 /* --- Hesap menüsü -------------------------------------------------------------
    Ad rozeti bir düğmedir; altında kişiye ait her şey: profil kartı, parola,
    çıkış. Üst bantta üç ayrı düğme yerine tek giriş noktası. */
@@ -508,6 +552,7 @@ export async function baslat() {
   const veri = await iste('api/acilis');
   Object.assign(durum, veri);
   menuyuKur();
+  temaDugmesiniKur();
   ceviriyiUygula();
   dilDegistiriciyiKur();
   parolaKutusunuKur();

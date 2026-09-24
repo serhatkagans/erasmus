@@ -28,3 +28,17 @@ test('faaliyet dosyasının parçaları türe göre', () => {
   assert.deepEqual(parcalar('sanal'), ['gundem', 'yoklama', 'tutanak', 'anket']);
   assert.deepEqual(parcalar('cikti'), []);
 });
+
+test('bağdan önce toplantı klasörüne yüklenmiş belge parçayı tamamlar', async () => {
+  const { dosyaOzetleri } = await import('../lib/faaliyet.mjs');
+  const satirlar = {
+    events: [{ id: 1, slug: 'wp2-a3-acilis-toplantisi', tur: 'tpm' }],
+    event_files: [{ event_id: 1, tur: 'gundem' }],
+    klasor_dosya: [{ klasor: '05.1.tutanak' }, { klasor: '05.1.sunum' }],
+  };
+  const db = { all: async sql => (/FROM events/.test(sql) ? satirlar.events : /FROM event_files/.test(sql) ? satirlar.event_files
+    : /FROM klasor_dosya/.test(sql) ? satirlar.klasor_dosya : []) };
+  const ozet = (await dosyaOzetleri(db))[1];
+  assert.equal(ozet.toplam, 6);
+  assert.deepEqual(ozet.eksik, ['infopack', 'yoklama', 'foto', 'anket'], 'gündem faaliyetten, tutanak klasörden; sunum parça değil');
+});

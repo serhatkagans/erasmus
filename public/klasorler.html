@@ -40,7 +40,10 @@
     <!-- İşe odaklı başlangıç: en sık yapılan dört iş en üstte. -->
     <div class="klasor-arac" id="klasor-arac" hidden>
       <input type="search" id="klasor-ara" class="klasor-ara klasor-arac-ara" data-t-yer="klasor.dosyaAra" data-t-etiket="klasor.dosyaAra">
+      <!-- Ağaçta da ızgarada da geçerli; bu yüzden ağaç panelinde değil burada. -->
+      <label class="klasor-bos-sec"><input type="checkbox" id="klasor-bos"> <span data-t="klasor.bosGoster"></span></label>
       <div class="klasor-arac-dugmeler">
+        <button type="button" class="dugme dugme-ikincil" id="izgara-dugme" aria-pressed="false" data-t="klasor.izgara"></button>
         <button type="button" class="dugme dugme-ikincil" id="kurumum-dugme" aria-pressed="false" data-t="klasor.kurumum"></button>
         <button type="button" class="dugme dugme-ikincil" id="son-dugme" aria-pressed="false" data-t="klasor.son"></button>
         <button type="button" class="dugme dugme-birincil" id="yukle-dugme" data-t="klasor.dosyaYukle"></button>
@@ -72,7 +75,6 @@
         <div class="klasor-yan-bas">
           <h2 id="klasor-agac-baslik" data-t="klasor.anaBasliklar"></h2>
           <p class="ipucu" data-t="klasor.anaBasliklar.not"></p>
-          <label class="klasor-bos-sec"><input type="checkbox" id="klasor-bos"> <span data-t="klasor.bosGoster"></span></label>
           <p class="ipucu" id="klasor-ozet"></p>
         </div>
         <nav id="klasor-agac" class="klasor-agac" aria-labelledby="klasor-agac-baslik"></nav>

@@ -2,8 +2,9 @@ import { ValidationError } from '../lib/data.mjs';
 import { send, body, rawBody } from '../lib/http.mjs';
 import {
   KLASORLER, klasorDogrula, adAnahtari, yukleyebilir, dosyaYetkisi,
-  dosyaBilgisi, aciklamaDogrula, MAX_KLASOR_BYTES, KLASOR_TURLERI, MAX_ACIKLAMA, BUTCE, TAKVIM,
+  dosyaBilgisi, aciklamaDogrula, MAX_KLASOR_BYTES, KLASOR_TURLERI, MAX_ACIKLAMA, BUTCE, TAKVIM, bagliParca,
 } from '../lib/klasor.mjs';
+import { parcalar, DOSYA_TURLERI } from '../lib/faaliyet.mjs';
 
 /**
  * Proje klasörleri (kurallar için bkz. lib/klasor.mjs):
@@ -18,6 +19,12 @@ import {
  *
  * Hepsi giriş ister. Hata iletileri çeviri anahtarıdır; istemci sözlükten
  * çözer (bkz. public/ortak.js · iste).
+ *
+ * Toplantı klasörlerinin faaliyet dosyasına bağlı iç klasörleri (bkz.
+ * lib/klasor.mjs · IC_PARCA) kendi dosyası tutmaz: listede faaliyetin
+ * dosyaları görünür, yükleme ve silme /api/etkinlikler/:id/dosya ve
+ * /api/faaliyet-dosya/:id üzerinden, faaliyetin yetkisiyle yapılır. Bu
+ * klasörlere klasör dosyası yüklenemez, taşınamaz, kısayol konamaz.
  *
  * Liste sorgusu dosya İÇERİĞİNİ taşımaz — fotoğraflardaki karar: yüzlerce
  * belgeyle liste megabaytlarca olurdu. İçerik sürüm sürüm ayrı iner.
@@ -37,19 +44,60 @@ export function klasorRoutes({ db }) {
       [dosyaId, no, bilgi.ad, bilgi.tur, veri.length, veri, userId, simdi()]);
   }
 
+  const resmiEtkinlikler = async () => new Map((await db.all('SELECT id,slug,tur,lider,baslangic,bitis,yer FROM events WHERE resmi=1'))
+    .map(e => [e.slug, e]));
+
+  /** Faaliyet dosyasına bağlı klasörler: klasör kimliği → {etkinlik, parca}.
+   *  Bağ, faaliyetin türü o parçayı istiyorsa kurulur. */
+  function baglar(etkinlikler) {
+    const harita = new Map();
+    for (const k of KLASORLER) {
+      const b = bagliParca(k.id);
+      const e = b && etkinlikler.get(b.etkinlik);
+      if (e && parcalar(e.tur).includes(b.parca)) harita.set(k.id, { etkinlik: e, parca: b.parca });
+    }
+    return harita;
+  }
+  const faaliyetYetkisi = (user, e) => !!user && (user.koordinator || user.partner === e.lider);
+
+  /** Klasör dosyası konabilecek bir hedef mi: bağlı klasör değil. */
+  async function bagliDegil(klasorId) {
+    if (baglar(await resmiEtkinlikler()).has(klasorId)) throw new ValidationError('klasor.hata.bagli');
+  }
+
   async function liste(user) {
     /* Etkinliğe bağlı klasörler tarihlerini VERİTABANINDAN alır, tohumdan
        değil: koordinatör bir toplantının tarihini değiştirirse klasör de
        yeni tarihi göstermeli. */
-    const etkinlikler = new Map((await db.all('SELECT slug,baslangic,bitis,yer FROM events WHERE resmi=1'))
-      .map(e => [e.slug, { slug: e.slug, baslangic: e.baslangic, bitis: e.bitis, yer: e.yer }]));
+    const etkinlikler = await resmiEtkinlikler();
+    const bag = baglar(etkinlikler);
+    const kimlikler = [...new Set([...bag.values()].map(b => b.etkinlik.id))];
+    const yer = kimlikler.map(() => '?').join(',') || 'NULL';
+    const fotolar = new Map((await db.all(
+      `SELECT event_id, CAST(count(*) AS INTEGER) AS n FROM event_photos WHERE event_id IN (${yer}) GROUP BY event_id`, kimlikler))
+      .map(r => [r.event_id, Number(r.n)]));
+    const anketler = new Map((await db.all(
+      `SELECT id, baslik, event_id FROM forms WHERE silindi='' AND event_id IN (${yer}) ORDER BY id`, kimlikler))
+      .reverse().map(f => [f.event_id, { id: f.id, baslik: f.baslik }]));
 
-    const klasorler = KLASORLER.map(k => ({
-      id: k.id, ust: k.ust, derinlik: k.derinlik, sahip: k.sahip, wp: k.wp, kurum: k.kurum, etiket: k.etiket,
-      anahtar: adAnahtari(k),
-      etkinlik: k.etkinlik ? etkinlikler.get(k.etkinlik) || null : null,
-      yukleyebilir: yukleyebilir(user, k.id),
-    }));
+    const klasorler = KLASORLER.map(k => {
+      const e = k.etkinlik ? etkinlikler.get(k.etkinlik) : null;
+      const b = bag.get(k.id);
+      return {
+        id: k.id, ust: k.ust, derinlik: k.derinlik, sahip: k.sahip, wp: k.wp, kurum: k.kurum, etiket: k.etiket,
+        anahtar: adAnahtari(k),
+        etkinlik: e ? { slug: e.slug, baslangic: e.baslangic, bitis: e.bitis, yer: e.yer } : null,
+        /* Bağlı klasöre yükleme faaliyetin kuralındadır (lider kurum ve
+           koordinatör); fotoğraf ve anket buradan yüklenmez, takvimden
+           eklenir. */
+        yukleyebilir: b ? DOSYA_TURLERI.includes(b.parca) && faaliyetYetkisi(user, b.etkinlik) : yukleyebilir(user, k.id),
+        bagli: b ? {
+          etkinlikId: b.etkinlik.id, parca: b.parca, lider: b.etkinlik.lider,
+          ...(b.parca === 'foto' ? { sayi: fotolar.get(b.etkinlik.id) || 0 } : {}),
+          ...(b.parca === 'anket' ? { form: anketler.get(b.etkinlik.id) || null } : {}),
+        } : null,
+      };
+    });
 
     /* Her dosyanın GEÇERLİ sürümü: en yüksek numara. Geçmiş ayrı istenir. */
     const satirlar = await db.all(
@@ -72,6 +120,26 @@ export function klasorRoutes({ db }) {
       kisayollar: kisayollar.filter(k => k.dosya_id === r.id).map(k => k.klasor),
       duzenleyebilir: dosyaYetkisi(user, r),
     }));
+
+    /* Faaliyet dosyaları, bağlı oldukları klasörde. Sürüm, taşıma ve
+       kısayol faaliyet dosyasında yoktur. */
+    const klasorunu = new Map([...bag].filter(([, b]) => DOSYA_TURLERI.includes(b.parca))
+      .map(([id, b]) => [`${b.etkinlik.id}:${b.parca}`, { id, e: b.etkinlik }]));
+    const faaliyet = await db.all(
+      `SELECT f.id, f.event_id, f.tur, f.ad, f.mime, f.boyut, f.created, u.ad AS yukleyen_ad, u.username, u.partner
+         FROM event_files f LEFT JOIN users u ON u.id=f.yukleyen
+        WHERE f.event_id IN (${yer}) ORDER BY f.created`, kimlikler);
+    for (const f of faaliyet) {
+      const hedef = klasorunu.get(`${f.event_id}:${f.tur}`);
+      if (!hedef) continue;
+      dosyalar.push({
+        id: f.id, kaynak: 'faaliyet', etkinlikId: f.event_id, klasor: hedef.id, ad: f.ad, aciklama: '',
+        partner: f.partner || hedef.e.lider, yukleyen: f.yukleyen_ad || f.username || '',
+        created: f.created, updated: f.created,
+        surum: { id: null, no: 1, boyut: Number(f.boyut), tur: f.mime, created: f.created },
+        surumSayisi: 1, kisayollar: [], duzenleyebilir: faaliyetYetkisi(user, hedef.e),
+      });
+    }
 
     return {
       klasorler, dosyalar, butce: BUTCE, takvim: TAKVIM,
@@ -113,6 +181,7 @@ export function klasorRoutes({ db }) {
     if (!id) {
       if (req.method !== 'POST') return send(res, 405, { error: 'klasor.hata.islem' });
       const hedef = klasorDogrula(url.searchParams.get('klasor'));
+      await bagliDegil(hedef);
       if (!yukleyebilir(user, hedef)) return send(res, 403, { error: 'klasor.hata.yetki' });
       const bilgi = dosyaBilgisi(baslik(req, 'x-file-name'));
       const aciklama = aciklamaDogrula(baslik(req, 'x-aciklama'));
@@ -148,6 +217,7 @@ export function klasorRoutes({ db }) {
     if (bolum === 'kisayol') {
       if (req.method === 'POST' && !altKlasor) {
         const hedef = klasorDogrula((await body(req)).klasor);
+        await bagliDegil(hedef);
         if (!yukleyebilir(user, hedef)) return send(res, 403, { error: 'klasor.hata.yetki' });
         if (hedef === dosya.klasor) throw new ValidationError('klasor.hata.kendiKlasoru');
         const var_ = await db.get('SELECT 1 AS x FROM klasor_kisayol WHERE dosya_id=? AND klasor=?', [id, hedef]);
@@ -189,6 +259,7 @@ export function klasorRoutes({ db }) {
          dosyasını koordinatörün sözleşme klasörüne "taşıyarak" yükleyebilirdi. */
       if (veri.klasor !== undefined && veri.klasor !== dosya.klasor) {
         hedef = klasorDogrula(veri.klasor);
+        await bagliDegil(hedef);
         if (!yukleyebilir(user, hedef)) return send(res, 403, { error: 'klasor.hata.yetki' });
         /* Taşındığı yerde kısayolu varsa artık gereksiz. */
         await db.run('DELETE FROM klasor_kisayol WHERE dosya_id=? AND klasor=?', [id, hedef]);

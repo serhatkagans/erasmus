@@ -436,6 +436,22 @@ async function dosyaSeridiCiz(e) {
         li.append(etiket);
       }
     }
+    /* Bağ kurulmadan önce toplantı klasörüne yüklenmiş belgeler: parçayı
+       tamamlar, klasördeki yerinden indirilir ve orada yönetilir. */
+    if (p.klasorde?.length) {
+      const eski = el('ul', 'fd-dosyalar');
+      for (const d of p.klasorde) {
+        const di = el('li');
+        const bag = el('a', 'metin-bag', d.ad);
+        bag.href = `api/klasorler/surum/${d.surumId}`;
+        bag.setAttribute('download', '');
+        const yer = el('a', 'metin-bag', `📁 ${d.klasor}`);
+        yer.href = `klasorler.html#${d.klasor}`;
+        di.append(bag, el('span', 'fd-meta', ` · ${boyutYaz(d.boyut)} · ${tamTarih(d.created.slice(0, 10))}${d.yukleyen ? ' · ' + d.yukleyen : ''} · `), yer);
+        eski.append(di);
+      }
+      li.append(eski);
+    }
     liste.append(li);
   }
 

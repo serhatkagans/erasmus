@@ -85,6 +85,9 @@ const FILES = {
   '/logo.png': ['logo.png', 'image/png'],
   '/logo-tam.jpg': ['logo-tam.jpg', 'image/jpeg'],
   '/ab-amblem.svg': ['ab-amblem.svg', 'image/svg+xml'],
+  '/ab-ortak-finanse.webp': ['ab-ortak-finanse.webp', 'image/webp'],
+  '/ulusal-ajans.webp': ['ulusal-ajans.webp', 'image/webp'],
+  '/ab-baskanligi.webp': ['ab-baskanligi.webp', 'image/webp'],
 };
 
 async function staticFile(req, res, url, readOnly) {

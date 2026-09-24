@@ -6,7 +6,7 @@
 
 .klasor-ilkeler { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 12px;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); max-width: 1000px }
-.klasor-ilkeler li { background: var(--kart); border: 1px solid var(--cizgi); border-left: 4px solid var(--yesil);
+.klasor-ilkeler li { background: var(--kart); border: 1px solid var(--cizgi); border-left: 4px solid var(--vurgu);
   border-radius: 12px; padding: 12px 14px; font-size: .9rem; color: var(--metin) }
 .klasor-ilkeler strong { display: block; color: var(--murekkep); font-size: .92rem; margin-bottom: 2px }
 
@@ -39,14 +39,14 @@
 .klasor-satir { display: flex; align-items: center; gap: 2px }
 .klasor-ac { flex: none; width: 26px; height: 30px; border: 0; background: none; color: var(--soluk); cursor: pointer; border-radius: 6px; font-size: .8rem }
 .klasor-ac[hidden] { display: block; visibility: hidden }
-.klasor-ac:hover { background: rgba(18,121,92,.08); color: var(--yesil) }
+.klasor-ac:hover { background: rgba(var(--vurgu-rgb), .08); color: var(--vurgu) }
 .klasor-sec { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 7px; padding: 6px 8px; border: 0; border-radius: 8px;
   background: none; text-align: left; font: inherit; font-size: .88rem; color: var(--murekkep); cursor: pointer }
-.klasor-sec:hover { background: rgba(18,121,92,.07) }
-.klasor-sec[aria-current="true"] { background: rgba(18,121,92,.13); color: var(--yesil-koyu); font-weight: 700 }
+.klasor-sec:hover { background: rgba(var(--vurgu-rgb), .07) }
+.klasor-sec[aria-current="true"] { background: rgba(var(--vurgu-rgb), .13); color: var(--vurgu-koyu); font-weight: 700 }
 .klasor-sec[data-bos="true"] .klasor-ad { color: var(--soluk) }
 .klasor-ad { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
-.klasor-no { flex: none; font-variant-numeric: tabular-nums; font-weight: 800; color: var(--yesil); font-size: .82em }
+.klasor-no { flex: none; font-variant-numeric: tabular-nums; font-weight: 800; color: var(--vurgu); font-size: .82em }
 .klasor-adet { flex: none; font-size: .74rem; font-weight: 700; color: var(--soluk); font-variant-numeric: tabular-nums }
 
 /* --- İçerik ------------------------------------------------------------- */
@@ -66,21 +66,21 @@
 .klasor-kartlar { display: grid; gap: 0; border: 1px solid var(--cizgi); border-radius: 12px; overflow: hidden }
 .klasor-kart { display: grid; gap: 3px; text-align: left; padding: 12px 14px; border: 1px solid var(--cizgi); border-radius: 12px;
   background: var(--kart); font: inherit; cursor: pointer; transition: border-color 120ms, box-shadow 120ms }
-.klasor-kart:hover { border-color: var(--yesil); box-shadow: var(--golge-o) }
-.klasor-kart[data-bos="true"] { background: #fbfcfc; border-style: dashed }
+.klasor-kart:hover { border-color: var(--vurgu); box-shadow: var(--golge-o) }
+.klasor-kart[data-bos="true"] { background: #fbfcfd; border-style: dashed }
 .klasor-kart-ad { font-weight: 700; color: var(--murekkep); font-size: .92rem; overflow-wrap: anywhere }
 .klasor-kart-adet { font-size: .78rem; color: var(--soluk); font-weight: 600 }
 
 .klasor-dosyalar { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px }
 .klasor-dosya { border: 1px solid var(--cizgi); border-radius: 12px; padding: 12px 14px; background: var(--kart) }
-.klasor-dosya[data-kisayol="true"] { border-style: dashed; background: #fbfcfc }
+.klasor-dosya[data-kisayol="true"] { border-style: dashed; background: #fbfcfd }
 .klasor-dosya-ust { display: flex; gap: 12px; align-items: flex-start }
 .klasor-tur { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 10px;
-  background: rgba(47,111,191,.1); color: var(--mavi); font-size: .68rem; font-weight: 800; letter-spacing: .03em }
+  background: rgba(16,132,194,.1); color: var(--mavi); font-size: .68rem; font-weight: 800; letter-spacing: .03em }
 .klasor-dosya-govde { flex: 1; min-width: 0 }
 .klasor-dosya-baslik { display: flex; align-items: center; gap: 8px; flex-wrap: wrap }
 .klasor-dosya-ad { font-weight: 700; color: var(--murekkep); overflow-wrap: anywhere }
-.klasor-dosya-ad:hover { color: var(--yesil); text-decoration: underline; text-underline-offset: 3px }
+.klasor-dosya-ad:hover { color: var(--vurgu); text-decoration: underline; text-underline-offset: 3px }
 .klasor-dosya-meta, .klasor-dosya-aciklama, .klasor-dosya-not { margin: 3px 0 0; font-size: .82rem; color: var(--soluk) }
 .klasor-dosya-aciklama { color: var(--metin) }
 .klasor-dosya-not { font-style: italic }
@@ -89,11 +89,11 @@
 .klasor-sil { color: #b3261e }
 .klasor-sorgu { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 10px 0 0 56px }
 .klasor-hedef { min-height: 40px; max-width: 100%; padding: 7px 10px; border: 1px solid var(--cizgi-koyu); border-radius: 9px; background: var(--kart) }
-.klasor-surumler { list-style: none; margin: 10px 0 0 56px; padding: 10px 12px; border-radius: 10px; background: #f4f7f6; font-size: .84rem; display: grid; gap: 4px }
+.klasor-surumler { list-style: none; margin: 10px 0 0 56px; padding: 10px 12px; border-radius: 10px; background: #f3f6f9; font-size: .84rem; display: grid; gap: 4px }
 .klasor-surumler a { color: var(--mavi-acik) }
 
-.klasor-yukle { padding: 18px 22px; background: #fbfcfc }
-.klasor-yukle[data-uzerinde="true"] { background: rgba(18,121,92,.08); outline: 2px dashed var(--yesil); outline-offset: -8px }
+.klasor-yukle { padding: 18px 22px; background: #fbfcfd }
+.klasor-yukle[data-uzerinde="true"] { background: rgba(var(--vurgu-rgb), .08); outline: 2px dashed var(--vurgu); outline-offset: -8px }
 .klasor-yukle-satir { display: flex; flex-wrap: wrap; gap: 10px; align-items: center }
 .klasor-aciklama { flex: 1 1 240px; min-height: 44px; padding: 9px 11px; border: 1px solid var(--cizgi-koyu); border-radius: 9px; background: var(--kart) }
 .klasor-gizli { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none }
@@ -114,7 +114,7 @@
 .klasor-arac { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 18px }
 .klasor-arac-ara { flex: 1 1 280px; min-height: 44px; font-size: 1rem }
 .klasor-arac-dugmeler { display: flex; flex-wrap: wrap; gap: 8px }
-.klasor-arac-dugmeler .dugme[aria-pressed="true"] { border-color: var(--yesil); color: var(--yesil); background: rgba(18,121,92,.08) }
+.klasor-arac-dugmeler .dugme[aria-pressed="true"] { border-color: var(--vurgu); color: var(--vurgu); background: rgba(var(--vurgu-rgb), .08) }
 .klasor-hakkinda { margin-top: 16px; border: 1px solid var(--cizgi); border-radius: 12px; background: var(--kart); padding: 0 16px }
 .klasor-hakkinda summary { cursor: pointer; padding: 12px 0; font-weight: 700; color: var(--murekkep) }
 .klasor-hakkinda[open] { padding-bottom: 16px }
@@ -129,7 +129,29 @@
    sayısını ve adı ayırt etmeyi zorlaştırıyordu. */
 .klasor-kartlar .klasor-kart { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 14px; border: 0; border-radius: 0; box-shadow: none }
 .klasor-kartlar .klasor-kart + .klasor-kart { border-top: 1px solid var(--cizgi) }
-.klasor-kartlar .klasor-kart:hover { background: rgba(18,121,92,.05); box-shadow: none }
+.klasor-kartlar .klasor-kart:hover { background: rgba(var(--vurgu-rgb), .05); box-shadow: none }
 .klasor-kartlar .klasor-kart[data-bos="true"] { border-style: solid }
 .klasor-kartlar .klasor-kart[data-bos="true"] .klasor-kart-ad { color: var(--metin) }
 .klasor-kartlar .klasor-kart:not(:has(.klasor-no)) { grid-template-columns: minmax(0, 1fr) auto }
+
+/* --- Izgara görünümü (Drive gibi) -----------------------------------------
+   Ağaç gizlenir, içerik tam genişlik olur; klasörler simgeli kutulardır.
+   Simge rengi markanın mavisidir; boş klasörün simgesi soluktur — "boş"
+   bilgisi rengin taşıdığı tek anlamdır. */
+.klasor-duzen[data-izgara="true"] { grid-template-columns: minmax(0, 1fr) }
+.klasor-duzen[data-izgara="true"] .klasor-yan { display: none }
+.klasor-kartlar.klasor-izgara { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; border: 0; border-radius: 0; overflow: visible }
+.klasor-kartlar.klasor-izgara .klasor-kart { grid-template-columns: minmax(0, 1fr); align-content: start; gap: 4px; padding: 14px;
+  border: 1px solid var(--cizgi); border-radius: 12px; min-height: 128px }
+.klasor-kartlar.klasor-izgara .klasor-kart + .klasor-kart { border-top: 1px solid var(--cizgi) }
+.klasor-kartlar.klasor-izgara .klasor-kart:hover { border-color: var(--mavi-acik); background: var(--kart); box-shadow: var(--golge-o) }
+.klasor-kartlar.klasor-izgara .klasor-kart:focus-visible { outline: 2px solid var(--mavi-acik); outline-offset: 2px }
+.klasor-kartlar.klasor-izgara .klasor-kart[data-bos="true"] { background: #fbfcfd; border-style: dashed }
+.klasor-simge { display: block; width: 40px; height: 40px; margin-bottom: 4px; color: var(--mavi-acik) }
+.klasor-simge svg { width: 100%; height: 100%; fill: currentColor }
+.klasor-kart[data-bos="true"] .klasor-simge { color: var(--cizgi-koyu) }
+.klasor-kartlar.klasor-izgara .klasor-no { justify-self: start }
+@media (max-width: 560px) {
+  .klasor-kartlar.klasor-izgara { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px }
+  .klasor-kartlar.klasor-izgara .klasor-kart { min-height: 112px; padding: 12px }
+}

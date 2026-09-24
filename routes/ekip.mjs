@@ -1,6 +1,6 @@
 import {
   ValidationError, partnerIds, wpIds, taskStatuses, DEFAULT_TASK_STATUS,
-  requireDay, requireOneOf, requireText, requireProgress, PROGRESS_STEP, PROJECT,
+  requireDay, requireOneOf, requireText, PROGRESS_STEP, PROJECT, gorevDurumu,
 } from '../lib/data.mjs';
 import { send, body } from '../lib/http.mjs';
 
@@ -60,24 +60,8 @@ export function ekipRoutes({ db }) {
     return id;
   };
 
-  /**
-   * Durum ile ilerlemeyi tutarlı tutar ve `[durum, ilerleme]` döndürür.
-   *
-   * İkisi aynı bilginin iki ölçeğidir; ayrı ayrı serbest bırakılsaydı
-   * "Tamamlandı ama %30" gibi kendi kendisiyle çelişen kayıtlar oluşurdu.
-   * Bu yüzden uçlar birbirine bağlanır: tamamlanan görev %100, henüz
-   * başlamamış görev %0'dır. Aradaki değerler serbesttir; ilerleme
-   * bildirilen bir göreve "devam ediyor" denir.
-   */
-  const durumVeIlerleme = (durumDegeri, ilerlemeDegeri) => {
-    let durum = requireOneOf(durumDegeri, taskStatuses, 'Durum');
-    let ilerleme = requireProgress(ilerlemeDegeri ?? 0);
-    if (durum === 'tamamlandi') ilerleme = 100;
-    else if (ilerleme === 100) durum = 'tamamlandi';
-    else if (durum === 'bekliyor' && ilerleme > 0) durum = 'devam';
-    if (durum === 'iptal') ilerleme = 0;
-    return [durum, ilerleme];
-  };
+  /* Durum ile ilerlemenin uyumu: bkz. lib/data.mjs · gorevDurumu. */
+  const durumVeIlerleme = (d, i, onceki = null) => gorevDurumu(d, i, onceki);
 
   return async function handle({ req, res, url, user }) {
     if (!url.pathname.startsWith('/api/ekip') && !url.pathname.startsWith('/api/gorevler')) return;
@@ -187,7 +171,7 @@ export function ekipRoutes({ db }) {
           /* Görevi üstlenen kişi işin ne kadarını bitirdiğini de bildirir:
              durum ve ilerleme aynı bilginin kaba ve ince hâlidir. */
           await db.run('UPDATE tasks SET durum=?,ilerleme=?,updated=? WHERE id=?',
-            [...durumVeIlerleme(veri.durum, veri.ilerleme), new Date().toISOString(), id]);
+            [...durumVeIlerleme(veri.durum, veri.ilerleme, mevcut), new Date().toISOString(), id]);
           return send(res, 200, gorevShape(await gorevYukle(id)));
         }
 
@@ -203,7 +187,7 @@ export function ekipRoutes({ db }) {
            requireText(veri.baslik, 'Görev başlığı', { max: 200 }),
            requireText(veri.aciklama, 'Açıklama', { required: false }),
            sonTarih,
-           ...durumVeIlerleme(veri.durum, veri.ilerleme),
+           ...durumVeIlerleme(veri.durum, veri.ilerleme, mevcut),
            new Date().toISOString(), id]);
         return send(res, 200, gorevShape(await gorevYukle(id)));
       }
